@@ -1,0 +1,51 @@
+/*import font from Google*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono&display=swap');
+
+body {
+    background-color: #1a1a1a;
+    color: white;
+    font-family: "Inter", SansSerif;
+    text-align: center;
+}
+
+#table {
+    background-color: #1d9a6a;
+    border: 10px solid #2d0705;
+    border-radius: 250px;
+    width: 70%;
+    height: 250px;
+    margin: 50px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.controls {
+    margin-top: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background: #19cd6d;
+    border: none;
+    border-radius: 5px;
+}
+
+button:active {
+    transform: scale(0.95); /* Tactile feedback when clicking */
+}
+
+#my-chips {
+    font-size: 24px;
+    color: #19cd6d;
+    margin: 20px;
+}
+
+#status-msg {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    color: #10b981;
+}
