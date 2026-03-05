@@ -1,9 +1,17 @@
 package com.pokerchipsapp;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document("players")
 public class Player {
+    @Id
     private String id;
+
     private String name;
     private int chips;
+
+    public Player() {}
 
     public Player(String name, int chips) {
         this.name = name;
