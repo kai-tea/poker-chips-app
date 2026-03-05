@@ -10,7 +10,11 @@ const bet_100_btn = document.getElementById("bet100");
 const reset_btn = document.getElementById("reset_btn");
 const create_btn = document.getElementById("create_btn");
 
+// Player List
+const player_list_el = document.getElementById("player_list");
 
+
+// setters
 function setChips(text){
     chips_element.innerText = text;
 }
@@ -20,8 +24,14 @@ function setPlayerName(name) {
     if (!cleaned) return;
 
     PLAYER_NAME = cleaned;
-    localStorage.setItem("playerName", PLAYER_NAME);
+    localStorage.setItem("player_name", PLAYER_NAME);
     getChipCount();
+}
+
+function renderPlayers(players) {
+    player_list_el.innerHTML = players
+        .map(p => `<li>${p.name} — ${p.chips} chips</li>`)
+        .join("");
 }
 
 // init input
@@ -36,7 +46,7 @@ player_input.addEventListener("keydown", (e) => {
 bet_50_btn.addEventListener("click", () => bet(50));
 bet_100_btn.addEventListener("click", () => bet(100));
 reset_btn.addEventListener("click", () => reset());
-create_btn.addEventListener("click", () => createPlayer(PLAYER_NAME));
+create_btn.addEventListener("click", () => createPlayer(player_input.value));
 
 // API calls
 async function createPlayer(name, chips = 1000) {
@@ -47,7 +57,11 @@ async function createPlayer(name, chips = 1000) {
     });
 
     if (!resp.ok) throw new Error(await resp.text());
-    return await resp.json();
+
+    const created = await resp.json();
+    await loadPlayers();
+    await getChipCount();
+    return created;
 }
 
 async function getChipCount() {
@@ -63,26 +77,35 @@ async function getChipCount() {
 
 async function bet(amount) {
     try {
-        await fetch(`/api/bet?name=${encodeURIComponent(PLAYER_NAME)}&amount=${amount}`);
+        const resp = await fetch(`/api/bet?name=${encodeURIComponent(PLAYER_NAME)}&amount=${amount}`);
         if (!resp.ok) throw new Error(await resp.text());
     } catch (err) {
         console.error(err);
         setChips("Bet failed");
     } finally {
         await getChipCount();
+        await loadPlayers();
     }
 }
 
 async function reset() {
     try {
-        const resp = await fetch(`api/reset?name=${encodeURIComponent(PLAYER_NAME)}`);
+        const resp = await fetch(`/(api/reset?name=${encodeURIComponent(PLAYER_NAME)}`);
         if (!resp.ok) throw new Error(await resp.text());
     } catch (err) {
         console.error(err);
         setChips("Reset failed");
     } finally {
         await getChipCount();
+        await loadPlayers();
     }
 }
 
+async function loadPlayers() {
+    const resp = await fetch("/api/players");
+    if (!resp.ok) throw new Error(await resp.text());
+    renderPlayers(await resp.json());
+}
+
+loadPlayers();
 getChipCount();

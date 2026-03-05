@@ -49,3 +49,13 @@ button:active {
     font-size: 0.9rem;
     color: #10b981;
 }
+
+#player_list {
+    color: white;
+    margin-top: 16px;
+    list-style: none;
+    padding: 0;
+}
+#player_list li {
+    margin: 6px 0;
+}
