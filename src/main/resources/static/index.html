@@ -13,13 +13,19 @@
     POKER TABLE
 </div>
 
-<div id="my-chips">Loading chips...</div>
+<div id="my_chips">Loading chips...</div>
+
+<div class="player">
+    <label for="player_name">Player Name</label>
+    <input id="player_name" type="text"/>
+    <button id="set_player">Use</button>
+</div>
 
 <div class="controls">
-    <button onclick="bet(50)">Bet $50</button>
-    <button onclick="bet(100)">Bet $100</button>
-    <button onclick="reset()">Reset Chips</button>
-    <button onclick="createPlayer('Daniel')">Create Player</button>
+    <button id="bet50">Bet 50</button>
+    <button id="bet100">Bet 100</button>
+    <button id="reset_btn">Reset Chips</button>
+    <button id="create_btn">Create Player</button>
 </div>
 
 <script src="app.js"></script>

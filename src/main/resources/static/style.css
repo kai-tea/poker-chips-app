@@ -38,7 +38,7 @@ button:active {
     transform: scale(0.95); /* Tactile feedback when clicking */
 }
 
-#my-chips {
+#my_chips {
     font-size: 24px;
     color: #19cd6d;
     margin: 20px;
