@@ -2,6 +2,8 @@ package com.pokerchipsapp;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 public class PokerController {
@@ -27,6 +29,11 @@ public class PokerController {
         int chips = (body == null || body.chips == null) ? 1000 : body.chips;
 
         return playerService.create(name, chips);
+    }
+
+    @GetMapping("/players")
+    public List<Player> getPlayers(){
+        return playerService.getPlayers();
     }
 
     @GetMapping("/players/{name}")

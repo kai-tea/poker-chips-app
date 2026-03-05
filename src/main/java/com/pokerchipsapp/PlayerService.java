@@ -3,6 +3,7 @@ package com.pokerchipsapp;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,6 +30,11 @@ public class PlayerService {
         return repo
                 .findByName(name)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + name));
+    }
+
+    // returns list of all Players
+    public List<Player> getPlayers() {
+        return repo.findAll();
     }
 
     // reduces chips by amount and creates new player if missing
