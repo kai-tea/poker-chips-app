@@ -29,7 +29,7 @@ public class PlayerService {
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + name));
     }
 
-    // returns list of all Players
+    // returns all Players
     public List<Player> getPlayers() {
         return repo.findAll();
     }
@@ -50,9 +50,15 @@ public class PlayerService {
         repo.deleteAll();
     }
 
-    public void resetChips(int amount) {
-        for (Player p : getPlayers()) {
+    // sets chips of all players
+    public void setAllChips(int amount) {
+        if (amount <= 0) throw new IllegalArgumentException("amount must be > 0");
+
+        List<Player> players = getPlayers();
+        for (Player p : players) {
             p.setChips(amount);
         }
+
+        repo.saveAll(players);
     }
 }

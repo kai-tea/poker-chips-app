@@ -43,9 +43,10 @@ public class PokerController {
         return playerService.get(name);
     }
 
+    // returns chips for given player name
     @GetMapping("/chips")
     public int getChips(@RequestParam String name){
-        Player p = playerService.create(name, 1000);
+        Player p = playerService.get(name);
         return p.getChips();
     }
 
@@ -56,7 +57,7 @@ public class PokerController {
 
     @GetMapping("/reset")
     public String resetChips() {
-        playerService.resetChips(startingChips);
+        playerService.setAllChips(startingChips);
         return "Chips reset";
     }
 
