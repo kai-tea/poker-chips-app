@@ -46,8 +46,13 @@ public class PlayerService {
     }
 
     // deletes repo
-    public void delete() {
+    public void deleteAll() {
         repo.deleteAll();
+    }
+
+    // delete Player
+    public void deletePlayer(String name) {
+        repo.deleteByName(name);
     }
 
     // sets chips of all players
