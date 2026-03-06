@@ -1,4 +1,4 @@
-package com.pokerchipsapp;
+package com.pokerchipsapp.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

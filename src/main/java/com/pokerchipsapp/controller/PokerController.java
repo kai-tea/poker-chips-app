@@ -1,5 +1,7 @@
-package com.pokerchipsapp;
+package com.pokerchipsapp.controller;
 
+import com.pokerchipsapp.model.Player;
+import com.pokerchipsapp.service.PlayerService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -61,7 +63,7 @@ public class PokerController {
         return "Chips reset";
     }
 
-    @GetMapping("/startingChips")
+    @GetMapping("/starting-chips")
     public String setStartingChips(@RequestParam int chips) {
         startingChips = chips;
         return "Starting Chips set";
@@ -80,5 +82,4 @@ public class PokerController {
         playerService.deletePlayer(name);
         return "Delete Player: " + name;
     }
-
 }

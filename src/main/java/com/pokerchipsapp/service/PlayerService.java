@@ -1,5 +1,7 @@
-package com.pokerchipsapp;
+package com.pokerchipsapp.service;
 
+import com.pokerchipsapp.model.Player;
+import com.pokerchipsapp.repo.PlayerRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -55,14 +57,12 @@ public class PlayerService {
         repo.deleteByName(name);
     }
 
-    // sets chips of all players
+    // sets chips of all player
     public void setAllChips(int amount) {
         if (amount <= 0) throw new IllegalArgumentException("amount must be > 0");
 
         List<Player> players = getPlayers();
-        for (Player p : players) {
-            p.setChips(amount);
-        }
+        players.forEach(p -> p.setChips(amount));
 
         repo.saveAll(players);
     }
