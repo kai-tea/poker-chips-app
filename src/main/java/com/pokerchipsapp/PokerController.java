@@ -8,6 +8,8 @@ import java.util.List;
 @RequestMapping("/api")
 public class PokerController {
 
+    private int startingChips = 1000;
+
     public static class CreatePlayerRequest {
         public String name;
         public Integer chips;
@@ -52,9 +54,15 @@ public class PokerController {
         return playerService.bet(name, amount);
     }
 
-    @GetMapping("reset")
-    public String resetChips(@RequestParam String name) {
-        playerService.reset();
-        return "reset";
+    @GetMapping("/reset")
+    public String resetChips() {
+        playerService.resetChips(startingChips);
+        return "Chips reset";
+    }
+
+    @GetMapping("/startingChips")
+    public String setStartingChips(@RequestParam int chips) {
+        startingChips = chips;
+        return "Starting Chips set";
     }
 }

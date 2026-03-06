@@ -2,10 +2,7 @@ package com.pokerchipsapp;
 
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PlayerService {
@@ -49,7 +46,13 @@ public class PlayerService {
     }
 
     // deletes repo
-    public void reset() {
+    public void delete() {
         repo.deleteAll();
+    }
+
+    public void resetChips(int amount) {
+        for (Player p : getPlayers()) {
+            p.setChips(amount);
+        }
     }
 }
