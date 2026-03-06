@@ -9,6 +9,8 @@ const bet_50_btn = document.getElementById("bet50");
 const bet_100_btn = document.getElementById("bet100");
 const reset_btn = document.getElementById("reset_btn");
 const create_btn = document.getElementById("create_btn");
+const delete_players_btn = document.getElementById("delete_players");
+
 
 // Player List
 const player_list_el = document.getElementById("player_list");
@@ -47,6 +49,7 @@ bet_50_btn.addEventListener("click", () => bet(50));
 bet_100_btn.addEventListener("click", () => bet(100));
 reset_btn.addEventListener("click", () => reset());
 create_btn.addEventListener("click", () => createPlayer(player_input.value));
+delete_players_btn.addEventListener("click", () => deleteAllPlayers());
 
 // API calls
 async function createPlayer(name, chips = 1000) {
@@ -90,7 +93,7 @@ async function bet(amount) {
 
 async function reset() {
     try {
-        const resp = await fetch(`/(api/reset?name=${encodeURIComponent(PLAYER_NAME)}`);
+        const resp = await fetch("/api/reset");
         if (!resp.ok) throw new Error(await resp.text());
     } catch (err) {
         console.error(err);
@@ -105,6 +108,19 @@ async function loadPlayers() {
     const resp = await fetch("/api/players");
     if (!resp.ok) throw new Error(await resp.text());
     renderPlayers(await resp.json());
+}
+
+async function deleteAllPlayers() {
+    try {
+        const resp = await fetch("/api/delete");
+        if (!resp.ok) throw new Error(await resp.text());
+    } catch (err) {
+        console.error(err);
+        setChips("Delete Failed")
+    } finally {
+        //await getChipCount();
+        await loadPlayers();
+    }
 }
 
 loadPlayers();

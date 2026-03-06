@@ -66,4 +66,10 @@ public class PokerController {
         startingChips = chips;
         return "Starting Chips set";
     }
+
+    @GetMapping("/delete")
+    public String deleteAllPlayers() {
+        playerService.delete();
+        return "Delete All Players";
+    }
 }
