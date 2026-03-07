@@ -9,11 +9,46 @@ public class Player {
     private String name;
     private int chips;
 
+    // game flow
+    private int seatIndex;
+    private boolean folded = false;
+    private boolean actedThisRound = false;
+    private int currentRoundBet = 0;
+
     public Player() {}
 
-    public Player(String name, int chips) {
+    public Player(String name, int chips, int seatIndex) {
         this.name = name;
         this.chips = chips;
+        this.seatIndex = seatIndex;
+    }
+
+    public boolean isFolded() {
+        return folded;
+    }
+    public void setFolded(boolean folded) {
+        this.folded = folded;
+    }
+
+    public boolean isActedThisRound() {
+        return actedThisRound;
+    }
+    public void setActedThisRound(boolean actedThisRound) {
+        this.actedThisRound = actedThisRound;
+    }
+
+    public int getCurrentRoundBet() {
+        return currentRoundBet;
+    }
+    public void setCurrentRoundBet(int currentRoundBet) {
+        this.currentRoundBet = currentRoundBet;
+    }
+
+    public int getSeatIndex() {
+        return seatIndex;
+    }
+    public void setSeatIndex(int seatIndex) {
+        this.seatIndex = seatIndex;
     }
 
     public String getName() { return name; }

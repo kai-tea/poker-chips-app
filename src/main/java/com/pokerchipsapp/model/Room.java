@@ -12,8 +12,18 @@ public class Room {
     private String code;
     private String host;
     private List<Player> players = new ArrayList<>();
+    private List<String> waitingPlayers = new ArrayList<>();
 
+    // Settings
     private RoomSettings settings;
+
+    // Game flow
+    private GamePhase phase = GamePhase.WAITING_FOR_PLAYERS;
+    private int dealerIndex = 0;
+    private int pot = 0;
+    private int currentPlayerIndex = 0;
+    private int currentBet = 0;
+
 
     public Room() {}
 
@@ -21,7 +31,7 @@ public class Room {
         this.code = code;
         this.host = host;
         this.settings = settings;
-        this.players.add(new Player(host, settings.getStartingChips()));
+        this.players.add(new Player(host, settings.getStartingChips(), 0));
     }
 
     public void addPlayer(String name){
@@ -29,7 +39,70 @@ public class Room {
 
         if (getPlayer(name) != null) return;
 
-        players.add(new Player(name, settings.getStartingChips()));
+        int seatIndex = getPlayerCount();
+        players.add(new Player(name, settings.getStartingChips(), seatIndex));
+    }
+    public int getPlayerCount(){
+        return players.size();
+    }
+    public void rotateDealer(){
+        dealerIndex = (dealerIndex+1) % getActivePlayerCount();
+    }
+    public void moveWaitingPlayers(){
+        for (String name : waitingPlayers){
+            addPlayer(name);
+        }
+        waitingPlayers = new ArrayList<>();
+    }
+    // Getters and Setters
+    public List<String> getWaitingPlayers() {
+        return waitingPlayers;
+    }
+
+    public int getActivePlayerCount() {
+        return players.size();
+    }
+
+    public String getCode() {
+        return code;
+    }
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public int getDealerIndex() {
+        return dealerIndex;
+    }
+    public void setDealerIndex(int dealerIndex) {
+        this.dealerIndex = dealerIndex;
+    }
+
+    public GamePhase getPhase() {
+        return phase;
+    }
+    public void setPhase(GamePhase phase) {
+        this.phase = phase;
+    }
+
+    public int getPot() {
+        return pot;
+    }
+    public void setPot(int pot) {
+        this.pot = pot;
+    }
+
+    public int getCurrentPlayerIndex() {
+        return currentPlayerIndex;
+    }
+    public void setCurrentPlayerIndex(int currentPlayerIndex) {
+        this.currentPlayerIndex = currentPlayerIndex;
+    }
+
+    public int getCurrentBet() {
+        return currentBet;
+    }
+    public void setCurrentBet(int currentBet) {
+        this.currentBet = currentBet;
     }
 
     public Player getPlayer(String name){
@@ -38,7 +111,7 @@ public class Room {
                 return p;
             }
         }
-        return null;
+        throw new IllegalArgumentException("Player: " + name + " not found in Room: " + code);
     }
 
     public String getHost() {
@@ -53,13 +126,6 @@ public class Room {
     }
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getcode() {
-        return code;
-    }
-    public void setcode(String code) {
-        this.code = code;
     }
 
     public List<Player> getPlayers() {

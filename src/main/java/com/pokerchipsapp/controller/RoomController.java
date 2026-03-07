@@ -4,6 +4,8 @@ import com.pokerchipsapp.dto.AddPlayerRequest;
 import com.pokerchipsapp.dto.BetRequest;
 import com.pokerchipsapp.dto.CreateRoomRequest;
 import com.pokerchipsapp.dto.JoinRoomRequest;
+import com.pokerchipsapp.dto.NameRequest;
+import com.pokerchipsapp.dto.RaiseRequest;
 import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
@@ -45,6 +47,11 @@ public class RoomController {
         return roomService.create(code, host, settings);
     }
 
+    @GetMapping("/{code}")
+    public Room getRoom(@PathVariable String code) {
+        return roomService.get(code);
+    }
+
     @GetMapping("/{code}/players")
     public List<Player> getPlayers(@PathVariable String code){
         return roomService.getPlayers(code);
@@ -55,22 +62,49 @@ public class RoomController {
         return roomService.getPlayer(code, name);
     }
 
-    @PostMapping("/{code}/players")
-    public void addPlayer(@PathVariable String code, @RequestBody AddPlayerRequest body) {
-        roomService.addPlayer(code, body.getName());
-    }
-
     @DeleteMapping("/{code}/players/{name}")
-    public void deletePlayer(@PathVariable String code, @PathVariable String name) { roomService.deletePlayer(code, name); }
+    public void deletePlayer(@PathVariable String code, @PathVariable String name) {
+        roomService.deletePlayer(code, name);
+    }
 
     @GetMapping("/{code}/chips/{name}")
     public int getChips(@PathVariable String code, @PathVariable String name){
         return roomService.getPlayer(code, name).getChips();
     }
 
+    @GetMapping("/{code}/waiting-players")
+    public List<String> getWaitingPlayers(@PathVariable String code) {
+        return roomService.get(code).getWaitingPlayers();
+    }
+
     @PostMapping("/{code}/bet")
     public Player bet(@PathVariable String code, @RequestBody BetRequest body) {
         return roomService.bet(code, body.getName(), body.getAmount());
+    }
+
+    @PostMapping("/{code}/check")
+    public void check(@PathVariable String code, @RequestBody NameRequest body) {
+        roomService.check(code, body.getName());
+    }
+
+    @PostMapping("/{code}/call")
+    public Player call(@PathVariable String code, @RequestBody NameRequest body) {
+        return roomService.call(code, body.getName());
+    }
+
+    @PostMapping("/{code}/raise")
+    public Player raise(@PathVariable String code, @RequestBody RaiseRequest body) {
+        return roomService.raise(code, body.getName(), body.getRaiseAmount());
+    }
+
+    @PostMapping("/{code}/fold")
+    public void fold(@PathVariable String code, @RequestBody NameRequest body) {
+        roomService.fold(code, body.getName());
+    }
+
+    @PostMapping("/{code}/start")
+    public void startRound(@PathVariable String code) {
+        roomService.startRound(code);
     }
 
     @PostMapping("/{code}/reset")
@@ -83,29 +117,3 @@ public class RoomController {
         return roomService.join(body.getCode(), body.getName());
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
