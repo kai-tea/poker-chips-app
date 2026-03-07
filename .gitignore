@@ -6,3 +6,7 @@ target
 
 # Mac OS
 .DS_Store
+
+# static
+*.js
+node_modules/
