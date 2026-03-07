@@ -3,6 +3,7 @@ package com.pokerchipsapp.controller;
 import com.pokerchipsapp.dto.AddPlayerRequest;
 import com.pokerchipsapp.dto.BetRequest;
 import com.pokerchipsapp.dto.CreateRoomRequest;
+import com.pokerchipsapp.dto.JoinRoomRequest;
 import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
@@ -75,6 +76,11 @@ public class RoomController {
     @PostMapping("/{code}/reset")
     public void resetAllChips(@PathVariable String code){
         roomService.resetAllChips(code);
+    }
+
+    @PostMapping("/{code}/join")
+    public Room joinRoom(@RequestBody JoinRoomRequest body){
+        return roomService.join(body.getCode(), body.getName());
     }
 }
 

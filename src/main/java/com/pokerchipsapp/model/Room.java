@@ -21,9 +21,15 @@ public class Room {
         this.code = code;
         this.host = host;
         this.settings = settings;
+        this.players.add(new Player(host, settings.getStartingChips()));
+    }
 
-        int startingChips = settings.getStartingChips();
-        this.players.add(new Player(host, startingChips));
+    public void addPlayer(String name){
+        if (name.isBlank()) return;
+
+        if (getPlayer(name) != null) return;
+
+        players.add(new Player(name, settings.getStartingChips()));
     }
 
     public Player getPlayer(String name){

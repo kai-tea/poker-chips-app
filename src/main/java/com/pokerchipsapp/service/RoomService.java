@@ -28,11 +28,19 @@ public class RoomService {
                 .orElseThrow(() -> new IllegalArgumentException("Room not found " + code));
     }
 
+    public Room join(String code, String name){
+        Room room = get(code);
+        room.addPlayer(name);
+
+        repo.save(room);
+        return room;
+    }
+
 
     // player methods
     private boolean containsPlayer(List<Player> players, String name){
         for (Player p : players){
-            if (p.getName().equals(name)){
+            if (p.getName().equalsIgnoreCase(name)){
                 return true;
             }
         }
@@ -42,18 +50,14 @@ public class RoomService {
     public void addPlayer(String code, String name){
         Room room = get(code);
 
-        if (containsPlayer(room.getPlayers(), name)) return;
-
-        int chips = room.getSettings().getStartingChips();
-
-        room.getPlayers().add(new Player(name, chips));
+        room.addPlayer(name);
 
         repo.save(room);
     }
 
     public void deletePlayer(String code, String name){
         Room room = get(code);
-        room.getPlayers().removeIf(p -> p.getName().equals(name));
+        room.getPlayers().removeIf(p -> p.getName().equalsIgnoreCase(name));
 
         repo.save(room);
     }
@@ -67,7 +71,7 @@ public class RoomService {
         var players = getPlayers(code);
 
         for (Player p : players){
-            if (p.getName().equals(name)){
+            if (p.getName().equalsIgnoreCase(name)){
                 return p;
             }
         }
@@ -83,7 +87,7 @@ public class RoomService {
         Room room = get(code);
         String host = room.getHost();
 
-        room.getPlayers().removeIf(p -> !p.getName().equals(host));
+        room.getPlayers().removeIf(p -> !p.getName().equalsIgnoreCase(host));
 
         repo.save(room);
     }
@@ -93,7 +97,7 @@ public class RoomService {
         if (amount < 0) throw new IllegalArgumentException("Chips must be >= 0");
 
         Room room = get(code);
-        Player p = getPlayer(code, name);
+        Player p = room.getPlayer(name);
 
         if (p == null) throw new IllegalArgumentException("Player: " + name + " not found for Room: " + code);
 
@@ -118,7 +122,16 @@ public class RoomService {
         if (amount <= 0) throw new IllegalArgumentException("amount must be > 0");
 
         Room room = get(code);
-        Player p = getPlayer(code, name);
+        Player p = room.getPlayer(name);
+
+        // debug
+        System.out.println("bet requested for name=" + name);
+        System.out.println("players in room:");
+        for (Player player : room.getPlayers()) {
+            System.out.println("- " + player.getName());
+        }
+
+        if (p == null) throw new IllegalArgumentException("Player not found: " + name + " in room: " + code);
 
         if (p.getChips() < amount) throw new IllegalArgumentException("Not enough chips");
 

@@ -10,3 +10,10 @@ target
 # static
 *.js
 node_modules/
+node/
+
+# maven
+mvnw
+mvnw.cmd
+.mvn/
+

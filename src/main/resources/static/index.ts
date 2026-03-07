@@ -23,13 +23,13 @@ function goToRoom(roomCode: string, playerName: string): void {
     window.location.href = "/room.html";
 }
 
-async function createRoom(code: string, host: string): Promise<Room> {
+async function createRoom(roomCode: string, host: string): Promise<Room> {
     const response = await fetch("/room", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ code, host })
+        body: JSON.stringify({ code: roomCode, host })
     });
 
     if (!response.ok) {
@@ -39,11 +39,17 @@ async function createRoom(code: string, host: string): Promise<Room> {
     return await response.json() as Room;
 }
 
-async function joinRoom(code: string, name: string): Promise<void> {
-    const response = await fetch(
-        `/room/${encodeURIComponent(code)}/players/${encodeURIComponent(name)}`,
-        { method: "POST" }
-    );
+async function joinRoom(roomCode: string, playerName: string): Promise<void> {
+    const response = await fetch(`/room/${encodeURIComponent(roomCode)}/players`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            code: roomCode,
+            name: playerName ,
+        })
+    });
 
     if (!response.ok) {
         throw new Error(await response.text());

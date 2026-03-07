@@ -8,8 +8,7 @@ if (!storedRoomCode || !storedPlayerName) {
 
 const roomCode: string = storedRoomCode;
 const playerName: string = storedPlayerName;
-
-if (!roomCode || !playerName) {
+ if (!roomCode || !playerName) {
     window.location.href = "/";
     throw new Error("Missing room data");
 }
@@ -84,13 +83,21 @@ async function refreshPlayers(): Promise<void> {
 }
 
 async function bet(amount: number): Promise<void> {
-    const response = await fetch(
-        `/room/${encodeURIComponent(roomCode)}/bet/${encodeURIComponent(playerName)}?amount=${amount}`,
-        { method: "POST" }
-    );
+    const response = await fetch(`/room/${encodeURIComponent(roomCode)}/bet`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: playerName,
+            amount: amount
+        })
+    });
 
     if (!response.ok) {
-        throw new Error(await response.text());
+        const text = await response.text();
+        console.error("bet failed response", text);
+        throw new Error(text);
     }
 }
 
@@ -111,7 +118,7 @@ async function refreshRoom(): Promise<void> {
 }
 
 if (roomTitleElement) {
-    roomTitleElement.innerText = `Room ${roomCode}`;
+    roomTitleElement.innerText = `Room: ${roomCode}`;
 }
 
 if (roomInfoElement) {
@@ -149,3 +156,8 @@ resetChipsButton?.addEventListener("click", async () => {
 });
 
 void refreshRoom();
+
+// to be replaced by web sockets
+setInterval(() => {
+    void refreshPlayers();
+}, 2000);
