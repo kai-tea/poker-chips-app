@@ -2,43 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Poker Night</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Rooms</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<main>
+    <h1>Poker Rooms</h1>
 
-<h1>Poker Room</h1>
+    <section>
+        <label for="playerNameInput">Your Name</label>
+        <input id="playerNameInput" type="text" />
+    </section>
 
-<div id="table">
-    POKER TABLE
-</div>
+    <section>
+        <h3>Create Room</h3>
+            <label for="createRoomCodeInput">Room Code</label>
+        <input id="createRoomCodeInput" type="text" />
 
-<div id="my_chips">Loading chips...</div>
+        <button id="createRoomButton">Create Room</button>
+    </section>
 
-<div class="player">
-    <label for="player_name_input">Player Name</label>
-    <input id="player_name_input" type="text"/>
-    <button id="player_name_btn">Use</button>
-</div>
+    <section>
+        <h3>Join Room</h3>
+        <label for="joinRoomCodeInput">Room Code</label>
+        <input id="joinRoomCodeInput" type="text" />
 
-<div class="controls">
-    <button id="bet50">Bet 50</button>
-    <button id="bet100">Bet 100</button>
-    <button id="reset_btn">Reset Chips</button>
-    <button id="create_btn">Create Player</button>
-    <button id="delete_players_btn">Delete Players</button>
-</div>
+        <button id="joinRoomButton">Join Room</button>
+    </section>
 
-<div style="margin-top: 12px;">
-    <label for="delete_player_input">Delete player:</label>
-    <input id="delete_player_input" type="text"/>
-    <button id="delete_player_btn">Delete</button>
-    <p id="delete_status"></p> <!-- Shows status in text field-->
-</div>
+    <p id="statusMessage"></p>
+</main>
 
-<ul id="player_list"></ul>
-
-<script src="app.js"></script>
-
+<script src="index.js"></script>
 </body>
 </html>

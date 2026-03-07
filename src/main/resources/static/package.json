@@ -1,0 +1,10 @@
+{
+  "name": "poker-chips-frontend",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}

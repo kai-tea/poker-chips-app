@@ -59,3 +59,6 @@ button:active {
 #player_list li {
     margin: 6px 0;
 }
+.delete-player-section {
+    margin-top: 12px;
+}
