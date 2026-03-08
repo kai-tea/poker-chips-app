@@ -35,8 +35,17 @@
     <section class="table-card">
         <div class="poker-table">
             <div class="table-center">
-                <div class="table-label">POKER TABLE</div>
-                <div class="table-pot" id="tablePotDisplay">Pot</div>
+                <div class="table-center">
+                    <div class="table-pot" id="tablePotDisplay">Pot</div>
+
+                    <div id="communityCards" class="community-cards">
+                        <div class="community-card hidden-card"></div>
+                        <div class="community-card hidden-card"></div>
+                        <div class="community-card hidden-card"></div>
+                        <div class="community-card hidden-card"></div>
+                        <div class="community-card hidden-card"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="seat seat-0"><div id="seat0" class="seat-label">Seat 1</div></div>
@@ -49,6 +58,38 @@
             <div class="seat seat-7"><div id="seat7" class="seat-label">Seat 8</div></div>
             <div class="seat seat-8"><div id="seat8" class="seat-label">Seat 9</div></div>
             <div class="seat seat-9"><div id="seat9" class="seat-label">Seat 10</div></div>
+        </div>
+    </section>
+
+    <section class="card action-card">
+        <div class="card-header">
+            <h2 class="card-title">Actions</h2>
+        </div>
+
+        <div class="action-row">
+            <button id="startRoundButton">Start Round</button>
+            <button id="resetChipsButton">Reset Chips</button>
+        </div>
+
+        <div class="action-row">
+            <button id="checkFoldButton">Check / Fold</button>
+            <button id="checkButton">Check</button>
+            <button id="bet50Button">Bet 50</button>
+            <button id="bet100Button">Bet 100</button>
+            <button id="callButton">Call</button>
+            <button id="foldButton">Fold</button>
+        </div>
+
+        <div class="action-row">
+            <label for="raiseAmountInput" class="sr-only">Raise amount</label>
+            <input id="raiseAmountInput" type="number" min="1" placeholder="Raise amount">
+            <button id="raiseButton">Raise</button>
+        </div>
+
+        <div id="showdownSection" style="display: none;">
+            <label for="winnerSelect">Winner</label>
+            <select id="winnerSelect"></select>
+            <button id="resolveShowdownButton">Award Pot</button>
         </div>
     </section>
 
@@ -68,36 +109,6 @@
         </article>
     </section>
 
-    <section class="card action-card">
-        <div class="card-header">
-            <h2 class="card-title">Actions</h2>
-        </div>
-
-        <div class="action-row">
-            <button id="startRoundButton">Start Round</button>
-            <button id="resetChipsButton">Reset Chips</button>
-        </div>
-
-        <div class="action-row">
-            <button id="bet50Button">Bet 50</button>
-            <button id="bet100Button">Bet 100</button>
-            <button id="checkButton">Check</button>
-            <button id="callButton">Call</button>
-            <button id="foldButton">Fold</button>
-        </div>
-
-        <div class="action-row">
-            <label for="raiseAmountInput" class="sr-only">Raise amount</label>
-            <input id="raiseAmountInput" type="number" min="1" placeholder="Raise amount">
-            <button id="raiseButton">Raise</button>
-        </div>
-
-        <div id="showdownSection" style="display: none;">
-            <label for="winnerSelect">Winner</label>
-            <select id="winnerSelect"></select>
-            <button id="resolveShowdownButton">Award Pot</button>
-        </div>
-    </section>
 </main>
 
 <script src="room.js"></script>

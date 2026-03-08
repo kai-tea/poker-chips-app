@@ -7,6 +7,8 @@ function loadRoomContext(): { roomCode: string; playerName: string } | null {
     return { roomCode, playerName };
 }
 
+let previousVisibleCommunityCards = 0;
+
 const roomContext = loadRoomContext();
 
 if (!roomContext) {
@@ -57,6 +59,7 @@ const startRoundButton = document.getElementById("startRoundButton") as HTMLButt
 const checkButton = document.getElementById("checkButton") as HTMLButtonElement | null;
 const callButton = document.getElementById("callButton") as HTMLButtonElement | null;
 const foldButton = document.getElementById("foldButton") as HTMLButtonElement | null;
+const checkFoldButton = document.getElementById("checkFoldButton") as HTMLButtonElement | null;
 const raiseButton = document.getElementById("raiseButton") as HTMLButtonElement | null;
 const raiseAmountInput = document.getElementById("raiseAmountInput") as HTMLInputElement | null;
 
@@ -66,37 +69,56 @@ const showdownSection = document.getElementById("showdownSection");
 const winnerSelect = document.getElementById("winnerSelect") as HTMLSelectElement | null;
 const resolveShowdownButton = document.getElementById("resolveShowdownButton") as HTMLButtonElement | null;
 
-function updateAvailableActions(room: Room): void {
-    if (room.phase === "SHOWDOWN") {
-        bet50Button && (bet50Button.disabled = true);
-        bet100Button && (bet100Button.disabled = true);
-        checkButton && (checkButton.disabled = true);
-        callButton && (callButton.disabled = true);
-        foldButton && (foldButton.disabled = true);
-        raiseButton && (raiseButton.disabled = true);
-        startRoundButton && (startRoundButton.disabled = true);
-        return;
-    }
+const communityCardsElement = document.getElementById("communityCards");
 
+function updateAvailableActions(room: Room): void {
     const me = room.players.find(
         player => player.name.toLowerCase() === playerName.toLowerCase()
     );
 
     const currentPlayer = room.players[room.currentPlayerIndex];
+
     const isMyTurn =
         !!me &&
         !!currentPlayer &&
         currentPlayer.name.toLowerCase() === playerName.toLowerCase();
 
     const inActiveRound =
-        room.phase !== "WITING_FOR_PLAYERS" &&
+        room.phase !== "WAITING_FOR_PLAYERS" &&
         room.phase !== "ROUND_OVER" &&
         room.phase !== "SHOWDOWN";
 
-    const canStartRound = room.phase === "WAITING_FOR_PLAYERS" || room.phase === "ROUND_OVER";
+    const canStartRound =
+        room.phase === "WAITING_FOR_PLAYERS" || room.phase === "ROUND_OVER";
+
+    const isHost =
+        !!room.host &&
+        room.host.toLowerCase() === playerName.toLowerCase();
+
+    const isShowdown = room.phase === "SHOWDOWN";
 
     if (startRoundButton) {
         startRoundButton.disabled = !canStartRound;
+    }
+
+    if (isShowdown) {
+        bet50Button && (bet50Button.disabled = true);
+        bet100Button && (bet100Button.disabled = true);
+        checkButton && (checkButton.disabled = true);
+        callButton && (callButton.disabled = true);
+        foldButton && (foldButton.disabled = true);
+        raiseButton && (raiseButton.disabled = true);
+        checkFoldButton && (checkFoldButton.disabled = true);
+
+        if (resolveShowdownButton) {
+            resolveShowdownButton.disabled = !isHost;
+        }
+
+        return;
+    }
+
+    if (resolveShowdownButton) {
+        resolveShowdownButton.disabled = true;
     }
 
     if (!me || !inActiveRound || me.folded || !isMyTurn) {
@@ -106,7 +128,7 @@ function updateAvailableActions(room: Room): void {
         callButton && (callButton.disabled = true);
         foldButton && (foldButton.disabled = true);
         raiseButton && (raiseButton.disabled = true);
-
+        checkFoldButton && (checkFoldButton.disabled = true);
         return;
     }
 
@@ -123,13 +145,11 @@ function updateAvailableActions(room: Room): void {
     callButton && (callButton.disabled = !canCall);
     foldButton && (foldButton.disabled = false);
     raiseButton && (raiseButton.disabled = !canRaise);
+    checkFoldButton && (checkFoldButton.disabled = false);
 
-    const actions: string[] = [];
-    if (canBet) actions.push("bet");
-    if (canCheck) actions.push("check");
-    if (canCall) actions.push("call");
-    if (canRaise) actions.push("raise");
-    actions.push("fold");
+    if (checkFoldButton) {
+        checkFoldButton.innerText = canCheck ? "Check / Fold" : "Check / Fold";
+    }
 }
 
 if (!chipCountElement) {
@@ -210,6 +230,9 @@ function renderGameState(room: Room): void {
     if (tablePotDisplayElement) {
         tablePotDisplayElement.innerText = `Pot: ${room.pot}`;
     }
+
+    renderCommunityCards(room.phase);
+
 }
 async function refreshGameState(): Promise<void> {
     const room = await getRoom();
@@ -292,6 +315,56 @@ function renderTableSeats(room: Room): void {
 
         seatEl.textContent = text;
     }
+}
+function renderCommunityCards(phase: string): void {
+    if (!communityCardsElement) return;
+
+    const cards = Array.from(communityCardsElement.children) as HTMLElement[];
+
+    const faces = ["", "", "", "", ""];
+
+    let visibleCount = 0;
+
+    switch (phase) {
+        case "FLOP":
+            visibleCount = 3;
+            break;
+        case "TURN":
+            visibleCount = 4;
+            break;
+        case "RIVER":
+        case "SHOWDOWN":
+        case "ROUND_OVER":
+            visibleCount = 5;
+            break;
+        default:
+            visibleCount = 0;
+    }
+
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+
+        card.classList.remove("card-flip", "showdown-card");
+        void card.offsetWidth;
+
+        if (i < visibleCount) {
+            card.className = "community-card";
+            card.innerText = faces[i];
+
+            if (i >= previousVisibleCommunityCards) {
+                card.classList.add("card-flip");
+            }
+
+            if (phase === "SHOWDOWN") {
+                card.classList.add("showdown-card");
+            }
+        } else {
+            card.className = "community-card hidden-card";
+            card.innerText = "";
+        }
+    }
+
+    previousVisibleCommunityCards = visibleCount;
 }
 
 async function getChipCount(): Promise<void> {
@@ -420,6 +493,23 @@ async function raise(): Promise<void> {
 
     if (!response.ok) {
         throw new Error(await response.text());
+    }
+}
+async function checkFold(): Promise<void> {
+    const room = await getRoom();
+
+    const me = room.players.find(
+        player => player.name.toLowerCase() === playerName.toLowerCase()
+    );
+
+    if (!me) {
+        throw new Error("Player not found in active players");
+    }
+
+    if (me.currentRoundBet === room.currentBet) {
+        await check();
+    } else {
+        await fold();
     }
 }
 
@@ -558,6 +648,15 @@ resolveShowdownButton?.addEventListener("click", async () => {
     } catch (err) {
         console.error(err);
         setChipCount("Resolve showdown failed");
+    }
+});
+checkFoldButton?.addEventListener("click", async () => {
+    try {
+        await checkFold();
+        await refreshRoom();
+    } catch (err) {
+        console.error(err);
+        setChipCount("Check / Fold failed");
     }
 });
 
