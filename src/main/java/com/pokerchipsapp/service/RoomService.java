@@ -182,6 +182,7 @@ public class RoomService {
         player.setChips(player.getChips() - amount);
         player.setCurrentRoundBet(newRoundBet);
         player.setActedThisRound(true);
+        player.setLastAction("BET");
 
         if (player.getCurrentRoundBet() > room.getCurrentBet()) {
             room.setCurrentBet(player.getCurrentRoundBet());
@@ -218,8 +219,10 @@ public class RoomService {
         }
 
         player.setActedThisRound(true);
+        player.setLastAction("CHECK");
 
         afterAction(room);
+
         repo.save(room);
     }
     public Player call(String code, String name) {
@@ -245,6 +248,7 @@ public class RoomService {
         player.setChips(player.getChips() - amountToCall);
         player.setCurrentRoundBet(player.getCurrentRoundBet() + amountToCall);
         player.setActedThisRound(true);
+        player.setLastAction("CALL");
 
         room.setPot(room.getPot() + amountToCall);
 
@@ -283,6 +287,7 @@ public class RoomService {
         player.setChips(player.getChips() - totalAmount);
         player.setCurrentRoundBet(player.getCurrentRoundBet() + totalAmount);
         player.setActedThisRound(true);
+        player.setLastAction("RAISE");
 
         room.setPot(room.getPot() + totalAmount);
         room.setCurrentBet(player.getCurrentRoundBet());
@@ -313,6 +318,7 @@ public class RoomService {
 
         player.setFolded(true);
         player.setActedThisRound(true);
+        player.setLastAction("FOLD");
 
         if (getActivePlayers(room).size() == 1) {
             room.setPhase(ROUND_OVER);
@@ -436,6 +442,7 @@ public class RoomService {
             p.setActedThisRound(false);
             p.setCurrentRoundBet(0);
             p.setPreCheckFold(false);
+            p.setLastAction(null);
         }
     }
     private void afterAction(Room room) {
@@ -476,6 +483,7 @@ public class RoomService {
         for (Player p : room.getPlayers()) {
             p.setActedThisRound(false);
             p.setCurrentRoundBet(0);
+            p.setLastAction(null);
         }
 
         if (room.getPhase() != ROUND_OVER) {
@@ -549,9 +557,11 @@ public class RoomService {
 
         if (currentPlayer.getCurrentRoundBet() == room.getCurrentBet()) {
             currentPlayer.setActedThisRound(true);
+            currentPlayer.setLastAction("CHECK");
         } else {
             currentPlayer.setFolded(true);
             currentPlayer.setActedThisRound(true);
+            currentPlayer.setLastAction("FOLD");
         }
 
         if (getActivePlayers(room).size() == 1) {
@@ -564,6 +574,14 @@ public class RoomService {
         } else {
             moveToNextPlayer(room);
             applyQueuedActionIfNeeded(room);
+        }
+    }
+
+    private void pauseForActionVisibility() {
+        try {
+            Thread.sleep(1200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

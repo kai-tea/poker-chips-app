@@ -26,6 +26,7 @@ type Player = {
     folded: boolean;
     seatIndex: number;
     preCheckFold: boolean;
+    lastAction?: string | null;
 };
 
 // @ts-ignore
@@ -179,22 +180,49 @@ function renderPlayers(players: Player[], currentPlayerIndex?: number): void {
     for (let i = 0; i < players.length; i++) {
         const player = players[i];
         const listItem = document.createElement("li");
+        listItem.className = "player-row";
 
-        let text = `${player.name} - chips: ${player.chips}, round bet: ${player.currentRoundBet}`;
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "player-name";
+        nameSpan.innerText = player.name;
+
+        const chipsSpan = document.createElement("span");
+        chipsSpan.className = "player-chips";
+        chipsSpan.innerText = `${player.chips} chips`;
+
+        const betSpan = document.createElement("span");
+        betSpan.className = "player-bet";
+        betSpan.innerText = `bet: ${player.currentRoundBet}`;
+
+        if (player.name.toLowerCase() === playerName.toLowerCase()) {
+            nameSpan.classList.add("is-me");
+        }
+
+        listItem.appendChild(nameSpan);
+        listItem.appendChild(chipsSpan);
+        listItem.appendChild(betSpan);
 
         if (player.folded) {
-            text += " (folded)";
+            const foldedSpan = document.createElement("span");
+            foldedSpan.className = "player-status";
+            foldedSpan.innerText = "folded";
+            listItem.appendChild(foldedSpan);
         }
 
         if (i === currentPlayerIndex) {
-            listItem.style.color = "green";
+            const turnSpan = document.createElement("span");
+            turnSpan.className = "player-status turn-status";
+            turnSpan.innerText = "turn";
+            listItem.appendChild(turnSpan);
         }
 
-        if (player.name.toLowerCase() === playerName.toLowerCase()) {
-            listItem.style.fontWeight = "bold";
+        if (player.lastAction) {
+            const actionSpan = document.createElement("span");
+            actionSpan.className = "player-status";
+            actionSpan.innerText = player.lastAction.toLowerCase();
+            listItem.appendChild(actionSpan);
         }
 
-        listItem.innerText = text;
         playerListElement.appendChild(listItem);
     }
 }
@@ -213,18 +241,19 @@ function renderTableSeats(room: Room): void {
     ];
 
     const activePlayers = [...room.players].sort((a, b) => a.seatIndex - b.seatIndex);
+    const currentPlayer = room.players[room.currentPlayerIndex];
 
     const centerX = 50;
     const centerY = 50;
-
-    // ellipse radii in percent of table size
     const radiusX = 40;
     const radiusY = 34;
 
-    // hide all seats first
+    // reset
     for (const seatEl of seatElements) {
         if (!seatEl || !seatEl.parentElement) continue;
         seatEl.parentElement.style.display = "none";
+        seatEl.parentElement.classList.remove("seat-active", "seat-inactive", "seat-folded");
+        seatEl.innerHTML = "";
     }
 
     const count = activePlayers.length;
@@ -235,9 +264,7 @@ function renderTableSeats(room: Room): void {
 
         if (!seatEl || !seatEl.parentElement) continue;
 
-        // start at top (-90deg), then spread evenly clockwise
         const angle = (-Math.PI / 2) + (2 * Math.PI * i) / count;
-
         const x = centerX + radiusX * Math.cos(angle);
         const y = centerY + radiusY * Math.sin(angle);
 
@@ -246,25 +273,60 @@ function renderTableSeats(room: Room): void {
         seatContainer.style.left = `${x}%`;
         seatContainer.style.top = `${y}%`;
 
-        let text = `${player.name} (${player.chips})`;
-
-        if (player.currentRoundBet > 0) {
-            text += ` | bet ${player.currentRoundBet}`;
-        }
-
-        if (player.folded) {
-            text += ` | folded`;
-        }
-
-        const currentPlayer = room.players[room.currentPlayerIndex];
         const isCurrentTurn =
             !!currentPlayer &&
             currentPlayer.name.toLowerCase() === player.name.toLowerCase();
+
         if (isCurrentTurn) {
-            text += ` | turn`;
+            seatContainer.classList.remove("seat-inactive");
+            seatContainer.classList.add("seat-active");
+        } else {
+            seatContainer.classList.remove("seat-active");
+            seatContainer.classList.add("seat-inactive");
         }
 
-        seatEl.textContent = text;
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "seat-player-name";
+        nameDiv.innerText = player.name;
+
+        const chipsDiv = document.createElement("div");
+        chipsDiv.className = "seat-player-chips";
+        chipsDiv.innerText = `${player.chips} chips`;
+
+        seatEl.innerHTML = "";
+        seatEl.appendChild(nameDiv);
+        seatEl.appendChild(chipsDiv);
+
+        if (player.currentRoundBet > 0) {
+            const betDiv = document.createElement("div");
+            betDiv.className = "seat-player-bet";
+            betDiv.innerText = `bet ${player.currentRoundBet}`;
+            seatEl.appendChild(betDiv);
+        }
+
+        if (player.folded) {
+            const statusDiv = document.createElement("div");
+            statusDiv.className = "seat-player-status";
+            statusDiv.innerText = "folded";
+            seatEl.appendChild(statusDiv);
+            seatContainer.classList.add("seat-folded");
+        } else if (isCurrentTurn) {
+            const statusDiv = document.createElement("div");
+            statusDiv.className = "seat-player-status turn-status";
+            statusDiv.innerText = "turn";
+            seatEl.appendChild(statusDiv);
+        }
+
+        if (player.name.toLowerCase() === playerName.toLowerCase()) {
+            nameDiv.style.color = "var(--accent)";
+        }
+
+        if (player.lastAction) {
+            const actionDiv = document.createElement("div");
+            actionDiv.className = "seat-player-status";
+            actionDiv.innerText = player.lastAction.toLowerCase();
+            seatEl.appendChild(actionDiv);
+        }
     }
 }
 function renderCommunityCards(phase: string): void {

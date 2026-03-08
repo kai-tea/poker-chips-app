@@ -9,6 +9,7 @@ public class Player {
     private String name;
     private int chips;
     private boolean preCheckFold = false;
+    private String lastAction;
 
     // game flow
     private int seatIndex;
@@ -22,6 +23,13 @@ public class Player {
         this.name = name;
         this.chips = chips;
         this.seatIndex = seatIndex;
+    }
+
+    public String getLastAction() {
+        return lastAction;
+    }
+    public void setLastAction(String lastAction) {
+        this.lastAction = lastAction;
     }
 
     public boolean isPreCheckFold() {
