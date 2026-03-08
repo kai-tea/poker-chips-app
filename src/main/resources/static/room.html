@@ -1,11 +1,26 @@
 <h1 id="roomTitle">Poker Room</h1>
 <p id="roomInfo"></p>
 
+<div id="gameState">
+    <p id="phaseText">Phase: -</p>
+    <p id="potText">Pot: -</p>
+    <p id="currentBetText">Current Bet: -</p>
+    <p id="currentPlayerText">Current Player: -</p>
+</div>
+
 <div id="chipCount">Loading chips...</div>
 <ul id="playerList"></ul>
 
 <button id="bet50Button">Bet 50</button>
 <button id="bet100Button">Bet 100</button>
 <button id="resetChipsButton">Reset Chips</button>
+
+<button id="startRoundButton">Start Round</button>
+<button id="checkButton">Check</button>
+<button id="callButton">Call</button>
+<button id="foldButton">Fold</button>
+
+<label for="raiseAmountInput"></label><input id="raiseAmountInput" type="number" min="1" placeholder="Raise amount" />
+<button id="raiseButton">Raise</button>
 
 <script src="room.js"></script>

@@ -37,7 +37,7 @@ public class Room {
     public void addPlayer(String name){
         if (name.isBlank()) return;
 
-        if (getPlayer(name) != null) return;
+        if (containsPlayer(name)) return;
 
         int seatIndex = getPlayerCount();
         players.add(new Player(name, settings.getStartingChips(), seatIndex));
@@ -54,6 +54,17 @@ public class Room {
         }
         waitingPlayers = new ArrayList<>();
     }
+    public boolean containsPlayer(String name){
+        for (Player p : players){
+            if (p.getName().equalsIgnoreCase(name)) return true;
+        }
+        for (String n : waitingPlayers){
+            if (n.equalsIgnoreCase(name)) return true;
+        }
+        return false;
+    }
+
+
     // Getters and Setters
     public List<String> getWaitingPlayers() {
         return waitingPlayers;

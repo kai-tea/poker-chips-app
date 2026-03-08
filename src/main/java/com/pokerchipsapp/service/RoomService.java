@@ -127,8 +127,16 @@ public class RoomService {
             throw new IllegalArgumentException("Not enough chips");
         }
 
+        int newRoundBet = player.getCurrentRoundBet() + amount;
+
+        if (room.getCurrentBet() > 0 && newRoundBet < room.getCurrentBet()) {
+            throw new IllegalStateException(
+                    "Bet is below current bet. Use call, raise, or fold."
+            );
+        }
+
         player.setChips(player.getChips() - amount);
-        player.setCurrentRoundBet(player.getCurrentRoundBet() + amount);
+        player.setCurrentRoundBet(newRoundBet);
         player.setActedThisRound(true);
 
         if (player.getCurrentRoundBet() > room.getCurrentBet()) {
