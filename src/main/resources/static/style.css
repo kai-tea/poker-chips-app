@@ -494,6 +494,33 @@ main input {
     filter: grayscale(0.7);
 }
 
+.seat-label {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.seat-dealer-button {
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fdfdfd;
+    color: #1f2937;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    box-shadow:
+            0 4px 10px rgba(0,0,0,0.22),
+            inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
 /* ---------- Poker cards ---------- */
 
 .community-cards {

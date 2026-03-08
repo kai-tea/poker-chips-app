@@ -37,6 +37,7 @@ type Room = {
     pot: number;
     currentBet: number;
     currentPlayerIndex: number;
+    dealerIndex: number;
     players: Player[];
     waitingPlayers?: string[];
 };
@@ -326,6 +327,15 @@ function renderTableSeats(room: Room): void {
             actionDiv.className = "seat-player-status";
             actionDiv.innerText = player.lastAction.toLowerCase();
             seatEl.appendChild(actionDiv);
+        }
+
+        const isDealer = player.seatIndex === room.dealerIndex;
+
+        if (isDealer) {
+            const dealerDiv = document.createElement("div");
+            dealerDiv.className = "seat-dealer-button";
+            dealerDiv.innerText = "D";
+            seatEl.appendChild(dealerDiv);
         }
     }
 }
