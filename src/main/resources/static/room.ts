@@ -27,6 +27,7 @@ type Player = {
 // @ts-ignore
 type Room = {
     code: string;
+    host: string;
     phase: string;
     pot: number;
     currentBet: number;
@@ -60,7 +61,22 @@ const raiseAmountInput = document.getElementById("raiseAmountInput") as HTMLInpu
 
 const tablePotDisplayElement = document.getElementById("tablePotDisplay");
 
+const showdownSection = document.getElementById("showdownSection");
+const winnerSelect = document.getElementById("winnerSelect") as HTMLSelectElement | null;
+const resolveShowdownButton = document.getElementById("resolveShowdownButton") as HTMLButtonElement | null;
+
 function updateAvailableActions(room: Room): void {
+    if (room.phase === "SHOWDOWN") {
+        bet50Button && (bet50Button.disabled = true);
+        bet100Button && (bet100Button.disabled = true);
+        checkButton && (checkButton.disabled = true);
+        callButton && (callButton.disabled = true);
+        foldButton && (foldButton.disabled = true);
+        raiseButton && (raiseButton.disabled = true);
+        startRoundButton && (startRoundButton.disabled = true);
+        return;
+    }
+
     const me = room.players.find(
         player => player.name.toLowerCase() === playerName.toLowerCase()
     );
@@ -122,6 +138,29 @@ if (!chipCountElement) {
 const chipCountEl: HTMLElement = chipCountElement;
 
 // game state functions
+function renderShowdownControls(room: Room): void {
+    if (!showdownSection || !winnerSelect || !resolveShowdownButton) return;
+
+    const isHost = room.host.toLowerCase() === playerName.toLowerCase();
+    const isShowdown = room.phase === "SHOWDOWN";
+
+    if (!isShowdown || !isHost) {
+        showdownSection.style.display = "none";
+        return;
+    }
+
+    showdownSection.style.display = "block";
+    winnerSelect.innerHTML = "";
+
+    for (const player of room.players) {
+        if (player.folded) continue;
+
+        const option = document.createElement("option");
+        option.value = player.name;
+        option.innerText = player.name;
+        winnerSelect.appendChild(option);
+    }
+}
 function renderWaitingPlayers(waitingPlayers: string[] = []): void {
     if (!waitingPlayersListElement) return;
 
@@ -203,6 +242,27 @@ function renderPlayers(players: Player[], currentPlayerIndex?: number): void {
 
         listItem.innerText = text;
         playerListElement.appendChild(listItem);
+    }
+}
+function renderTableSeats(room: Room): void {
+    const seatElements = [
+        document.getElementById("seat0"),
+        document.getElementById("seat1"),
+        document.getElementById("seat2"),
+        document.getElementById("seat3"),
+    ];
+
+    for (let i = 0; i < seatElements.length; i++) {
+        const seatEl = seatElements[i];
+        if (!seatEl) continue;
+
+        const player = room.players.find((p: any) => p.seatIndex === i);
+
+        if (player) {
+            seatEl.textContent = `${player.name} (${player.chips})`;
+        } else {
+            seatEl.textContent = `Seat ${i + 1}`;
+        }
     }
 }
 
@@ -341,7 +401,9 @@ async function refreshRoom(): Promise<void> {
     renderGameState(room);
     renderPlayers(room.players, room.currentPlayerIndex);
     renderWaitingPlayers(room.waitingPlayers ?? []);
+    renderTableSeats(room);
     updateAvailableActions(room);
+    renderShowdownControls(room);
 
     const isActivePlayer = room.players.some(
         player => player.name.toLowerCase() === playerName.toLowerCase()
@@ -351,6 +413,28 @@ async function refreshRoom(): Promise<void> {
         await getChipCount();
     } else {
         setChipCount("You are waiting for the next round");
+    }
+}
+async function resolveShowdown(): Promise<void> {
+    if (!winnerSelect) {
+        throw new Error("Winner select not found");
+    }
+
+    const winnerName = winnerSelect.value;
+
+    const response = await fetch(`/room/${encodeURIComponent(roomCode)}/resolve-showdown`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            hostName: playerName,
+            winnerName: winnerName
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text());
     }
 }
 
@@ -431,6 +515,15 @@ raiseButton?.addEventListener("click", async () => {
     } catch (err) {
         console.error(err);
         setChipCount("Raise failed");
+    }
+});
+resolveShowdownButton?.addEventListener("click", async () => {
+    try {
+        await resolveShowdown();
+        await refreshRoom();
+    } catch (err) {
+        console.error(err);
+        setChipCount("Resolve showdown failed");
     }
 });
 

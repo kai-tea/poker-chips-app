@@ -335,6 +335,35 @@ public class RoomService {
         resetRoundState(room);
         repo.save(room);
     }
+    public void resolveShowdown(String code, String hostName, String winnerName) {
+        Room room = get(code);
+
+        if (room.getPhase() != SHOWDOWN) {
+            throw new IllegalStateException("Showdown is not active");
+        }
+
+        if (!room.getHost().equalsIgnoreCase(hostName)) {
+            throw new IllegalStateException("Only the host can resolve showdown");
+        }
+
+        Player winner = getPlayer(room, winnerName);
+
+        winner.setChips(winner.getChips() + room.getPot());
+        room.setPot(0);
+        room.setCurrentBet(0);
+        room.setPhase(ROUND_OVER);
+
+        for (Player p : room.getPlayers()) {
+            p.setCurrentRoundBet(0);
+            p.setActedThisRound(false);
+            p.setFolded(false);
+        }
+
+        room.moveWaitingPlayers();
+
+        repo.save(room);
+    }
+
 
     // game flow helpers
     private void resetRoundState(Room room) {

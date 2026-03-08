@@ -116,4 +116,9 @@ public class RoomController {
     public PlayerStatusResponse getPlayerStatus(@PathVariable String code, @PathVariable String name) {
         return roomService.getPlayerStatus(code, name);
     }
+
+    @PostMapping("/{code}/resolve-showdown")
+    public void resolveShowdown(@PathVariable String code, @RequestBody ResolveShowdownRequest body) {
+        roomService.resolveShowdown(code, body.getHostName(), body.getWinnerName());
+    }
 }

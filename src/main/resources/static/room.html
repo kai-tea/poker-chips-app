@@ -39,18 +39,10 @@
                 <div class="table-pot" id="tablePotDisplay">Pot</div>
             </div>
 
-            <div class="seat seat-top">
-                <div class="seat-label">Seat 1</div>
-            </div>
-            <div class="seat seat-right">
-                <div class="seat-label">Seat 2</div>
-            </div>
-            <div class="seat seat-bottom">
-                <div class="seat-label">Seat 3</div>
-            </div>
-            <div class="seat seat-left">
-                <div class="seat-label">Seat 4</div>
-            </div>
+            <div class="seat seat-top"><div id="seat0" class="seat-label">Seat 1</div></div>
+            <div class="seat seat-right"><div id="seat1" class="seat-label">Seat 2</div></div>
+            <div class="seat seat-bottom"><div id="seat2" class="seat-label">Seat 3</div></div>
+            <div class="seat seat-left"><div id="seat3" class="seat-label">Seat 4</div></div>
         </div>
     </section>
 
@@ -92,6 +84,12 @@
             <label for="raiseAmountInput" class="sr-only">Raise amount</label>
             <input id="raiseAmountInput" type="number" min="1" placeholder="Raise amount">
             <button id="raiseButton">Raise</button>
+        </div>
+
+        <div id="showdownSection" style="display: none;">
+            <label for="winnerSelect">Winner</label>
+            <select id="winnerSelect"></select>
+            <button id="resolveShowdownButton">Award Pot</button>
         </div>
     </section>
 </main>
