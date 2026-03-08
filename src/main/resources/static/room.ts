@@ -71,6 +71,12 @@ const resolveShowdownButton = document.getElementById("resolveShowdownButton") a
 
 const communityCardsElement = document.getElementById("communityCards");
 
+//host
+const hostChipsSection = document.getElementById("hostChipsSection");
+const hostPlayerSelect = document.getElementById("hostPlayerSelect") as HTMLSelectElement | null;
+const hostChipsInput = document.getElementById("hostChipsInput") as HTMLInputElement | null;
+const setPlayerChipsButton = document.getElementById("setPlayerChipsButton") as HTMLButtonElement | null;
+
 function updateAvailableActions(room: Room): void {
     const me = room.players.find(
         player => player.name.toLowerCase() === playerName.toLowerCase()
@@ -282,22 +288,39 @@ function renderTableSeats(room: Room): void {
         document.getElementById("seat9"),
     ];
 
-    for (let i = 0; i < seatElements.length; i++) {
-        const seatEl = seatElements[i];
-        if (!seatEl) continue;
+    const activePlayers = [...room.players].sort((a, b) => a.seatIndex - b.seatIndex);
+
+    const centerX = 50;
+    const centerY = 50;
+
+    // ellipse radii in percent of table size
+    const radiusX = 40;
+    const radiusY = 34;
+
+    // hide all seats first
+    for (const seatEl of seatElements) {
+        if (!seatEl || !seatEl.parentElement) continue;
+        seatEl.parentElement.style.display = "none";
+    }
+
+    const count = activePlayers.length;
+
+    for (let i = 0; i < count; i++) {
+        const player = activePlayers[i];
+        const seatEl = seatElements[player.seatIndex];
+
+        if (!seatEl || !seatEl.parentElement) continue;
+
+        // start at top (-90deg), then spread evenly clockwise
+        const angle = (-Math.PI / 2) + (2 * Math.PI * i) / count;
+
+        const x = centerX + radiusX * Math.cos(angle);
+        const y = centerY + radiusY * Math.sin(angle);
 
         const seatContainer = seatEl.parentElement;
-        const player = room.players.find(player => player.seatIndex === i);
-
-        if (!seatContainer) continue;
-
-        if (!player) {
-            seatContainer.style.display = "none";
-            seatEl.textContent = "";
-            continue;
-        }
-
         seatContainer.style.display = "block";
+        seatContainer.style.left = `${x}%`;
+        seatContainer.style.top = `${y}%`;
 
         let text = `${player.name} (${player.chips})`;
 
@@ -309,7 +332,11 @@ function renderTableSeats(room: Room): void {
             text += ` | folded`;
         }
 
-        if (i === room.currentPlayerIndex) {
+        const currentPlayer = room.players[room.currentPlayerIndex];
+        const isCurrentTurn =
+            !!currentPlayer &&
+            currentPlayer.name.toLowerCase() === player.name.toLowerCase();
+        if (isCurrentTurn) {
             text += ` | turn`;
         }
 
@@ -366,7 +393,55 @@ function renderCommunityCards(phase: string): void {
 
     previousVisibleCommunityCards = visibleCount;
 }
+function renderHostChipControls(room: Room): void {
+    if (!hostChipsSection || !hostPlayerSelect) return;
 
+    const isHost = room.host.toLowerCase() === playerName.toLowerCase();
+
+    if (!isHost) {
+        hostChipsSection.style.display = "none";
+        return;
+    }
+
+    hostChipsSection.style.display = "block";
+    hostPlayerSelect.innerHTML = "";
+
+    for (const player of room.players) {
+        const option = document.createElement("option");
+        option.value = player.name;
+        option.innerText = `${player.name} (${player.chips})`;
+        hostPlayerSelect.appendChild(option);
+    }
+}
+
+async function setPlayerChipsAsHost(): Promise<void> {
+    if (!hostPlayerSelect || !hostChipsInput) {
+        throw new Error("Host chip controls not found");
+    }
+
+    const selectedPlayer = hostPlayerSelect.value;
+    const chips = Number(hostChipsInput.value);
+
+    if (Number.isNaN(chips) || chips < 0) {
+        throw new Error("Chips must be >= 0");
+    }
+
+    const response = await fetch(`/room/${encodeURIComponent(roomCode)}/set-player-chips`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            hostName: playerName,
+            playerName: selectedPlayer,
+            chips: chips
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+}
 async function getChipCount(): Promise<void> {
     const response = await fetch(
         `/room/${encodeURIComponent(roomCode)}/chips/${encodeURIComponent(playerName)}`
@@ -522,6 +597,7 @@ async function refreshRoom(): Promise<void> {
     renderTableSeats(room);
     updateAvailableActions(room);
     renderShowdownControls(room);
+    renderHostChipControls(room);
 
     const isActivePlayer = room.players.some(
         player => player.name.toLowerCase() === playerName.toLowerCase()
@@ -657,6 +733,15 @@ checkFoldButton?.addEventListener("click", async () => {
     } catch (err) {
         console.error(err);
         setChipCount("Check / Fold failed");
+    }
+});
+setPlayerChipsButton?.addEventListener("click", async () => {
+    try {
+        await setPlayerChipsAsHost();
+        await refreshRoom();
+    } catch (err) {
+        console.error(err);
+        setChipCount("Set chips failed");
     }
 });
 

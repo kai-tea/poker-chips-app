@@ -391,6 +391,25 @@ public class RoomService {
     }
 
 
+    // host actions
+    public void setPlayerChipsAsHost(String code, String hostName, String playerName, int chips) {
+        if (chips < 0) {
+            throw new IllegalArgumentException("Chips must be >= 0");
+        }
+
+        Room room = get(code);
+
+        if (!room.getHost().equalsIgnoreCase(hostName)) {
+            throw new IllegalStateException("Only the host can set player chips");
+        }
+
+        Player player = room.getPlayer(playerName);
+        player.setChips(chips);
+
+        repo.save(room);
+    }
+
+
     // game flow helpers
     private void resetRoundState(Room room) {
         room.setPot(0);
@@ -501,4 +520,6 @@ public class RoomService {
             throw new IllegalStateException("No active round");
         }
     }
+
+
 }

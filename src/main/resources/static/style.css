@@ -287,7 +287,6 @@ main input {
 }
 
 .seat {
-    display: none;
     position: absolute;
     min-width: 110px;
     padding: 10px 12px;
@@ -298,6 +297,8 @@ main input {
     text-align: center;
     backdrop-filter: blur(4px);
     font-size: 0.9rem;
+    transform: translate(-50%, -50%);
+    display: none;
 }
 
 /* ---------- Poker cards ---------- */
@@ -433,18 +434,6 @@ main input {
             0 0 0 2px rgba(94, 234, 212, 0.55),
             0 8px 20px rgba(0, 0, 0, 0.28);
 }
-
-/* 10-handed layout around the oval */
-.seat-0 { top: 18px; left: 50%; transform: translateX(-50%); }
-.seat-1 { top: 42px; right: 120px; }
-.seat-2 { top: 120px; right: 24px; }
-.seat-3 { top: 50%; right: 24px; transform: translateY(-50%); }
-.seat-4 { bottom: 42px; right: 120px; }
-.seat-5 { bottom: 18px; left: 50%; transform: translateX(-50%); }
-.seat-6 { bottom: 42px; left: 120px; }
-.seat-7 { top: 50%; left: 24px; transform: translateY(-50%); }
-.seat-8 { top: 120px; left: 24px; }
-.seat-9 { top: 42px; left: 120px; }
 
 /* ---------- Responsive ---------- */
 
