@@ -475,28 +475,51 @@ function updateBetRaiseControls(room: Room): void {
         room.phase !== "SHOWDOWN" &&
         room.phase !== "ROUND_OVER";
 
-    const canAct = inActiveRound && !me.folded && isMyTurn;
+    const canUseSlider = inActiveRound && !me.folded;
+    const canPressBetRaiseButton = inActiveRound && !me.folded && isMyTurn;
 
-    betRaiseSlider.disabled = !canAct;
-    betRaiseActionButton.disabled = !canAct;
+    betRaiseSlider.disabled = !canUseSlider;
+    betRaiseActionButton.disabled = !canPressBetRaiseButton;
 
-    const hundredBbCap = room.settings.bigBlind * 100;
+    const bigBlind = room.settings.bigBlind;
+    const hundredBbCap = bigBlind * 100;
     const sliderMax = Math.max(1, Math.min(me.chips, hundredBbCap));
 
-    betRaiseSlider.min = "1";
-    betRaiseSlider.max = String(sliderMax);
+    const sliderMin = me.chips < bigBlind ? 1 : bigBlind;
 
-    if (Number(betRaiseSlider.value) > sliderMax) {
-        betRaiseSlider.value = String(sliderMax);
+    betRaiseSlider.min = String(sliderMin);
+    betRaiseSlider.max = String(sliderMax);
+    betRaiseSlider.step = String(bigBlind);
+
+    let currentValue = Number(betRaiseSlider.value);
+
+    if (currentValue < sliderMin) {
+        currentValue = sliderMin;
     }
 
-    const amount = Number(betRaiseSlider.value);
-    betRaiseValue.innerText = String(amount);
+    if (currentValue > sliderMax) {
+        currentValue = sliderMax;
+    }
+
+    if (sliderMax >= bigBlind) {
+        currentValue = Math.round(currentValue / bigBlind) * bigBlind;
+
+        if (currentValue > sliderMax) {
+            currentValue = Math.floor(sliderMax / bigBlind) * bigBlind;
+        }
+
+        if (currentValue < sliderMin) {
+            currentValue = sliderMin;
+        }
+    }
+
+    betRaiseSlider.value = String(currentValue);
+    betRaiseValue.innerText = String(currentValue);
 
     if (room.currentBet === 0) {
-        betRaiseActionButton.innerText = `Bet ${amount}`;
+        betRaiseActionButton.innerText = `Bet ${currentValue}`;
     } else {
-        betRaiseActionButton.innerText = `Raise ${amount}`;
+        betRaiseActionButton.innerText = `Raise ${currentValue}`;
     }
 
     updateSliderFill();
