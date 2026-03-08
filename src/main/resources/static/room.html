@@ -1,33 +1,101 @@
-<h1 id="roomTitle">Poker Room</h1>
-<p id="roomInfo"></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Room</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="room-page">
+    <header class="room-header">
+        <div>
+            <h1 id="roomTitle" class="room-title">Poker Room</h1>
+            <p id="roomInfo" class="room-subtitle"></p>
+        </div>
+    </header>
 
-<div id="waitingPlayersSection">
-    <h3>Waiting Players</h3>
-    <ul id="waitingPlayersList"></ul>
-</div>
+    <section class="stats-grid">
+        <article class="card">
+            <h2 class="card-title">Game State</h2>
+            <div id="gameState" class="stats-list">
+                <p id="phaseText">Phase: -</p>
+                <p id="potText">Pot: -</p>
+                <p id="currentBetText">Current Bet: -</p>
+                <p id="currentPlayerText">Current Player: -</p>
+            </div>
+        </article>
 
-<div id="gameState">
-    <p id="phaseText">Phase: -</p>
-    <p id="potText">Pot: -</p>
-    <p id="currentBetText">Current Bet: -</p>
-    <p id="currentPlayerText">Current Player: -</p>
-</div>
+        <article class="card">
+            <h2 class="card-title">Your Stack</h2>
+            <div id="chipCount" class="chip-count">Loading chips...</div>
+        </article>
+    </section>
 
-<div id="chipCount">Loading chips...</div>
-<ul id="playerList"></ul>
+    <section class="table-card">
+        <div class="poker-table">
+            <div class="table-center">
+                <div class="table-label">POKER TABLE</div>
+                <div class="table-pot" id="tablePotDisplay">Pot</div>
+            </div>
 
-<button id="bet50Button">Bet 50</button>
-<button id="bet100Button">Bet 100</button>
-<button id="resetChipsButton">Reset Chips</button>
+            <div class="seat seat-top">
+                <div class="seat-label">Seat 1</div>
+            </div>
+            <div class="seat seat-right">
+                <div class="seat-label">Seat 2</div>
+            </div>
+            <div class="seat seat-bottom">
+                <div class="seat-label">Seat 3</div>
+            </div>
+            <div class="seat seat-left">
+                <div class="seat-label">Seat 4</div>
+            </div>
+        </div>
+    </section>
 
-<button id="startRoundButton">Start Round</button>
-<button id="checkButton">Check</button>
-<button id="callButton">Call</button>
-<button id="foldButton">Fold</button>
+    <section class="content-grid">
+        <article class="card">
+            <div class="card-header">
+                <h2 class="card-title">Players</h2>
+            </div>
+            <ul id="playerList" class="player-list"></ul>
+        </article>
 
-<label for="raiseAmountInput"></label><input id="raiseAmountInput" type="number" min="1" placeholder="Raise amount" />
-<button id="raiseButton">Raise</button>
+        <article class="card">
+            <div class="card-header">
+                <h2 class="card-title">Waiting Players</h2>
+            </div>
+            <ul id="waitingPlayersList" class="player-list muted-list"></ul>
+        </article>
+    </section>
 
-<p id="availableActionsText">Available actions: -</p>
+    <section class="card action-card">
+        <div class="card-header">
+            <h2 class="card-title">Actions</h2>
+        </div>
+
+        <div class="action-row">
+            <button id="startRoundButton">Start Round</button>
+            <button id="resetChipsButton">Reset Chips</button>
+        </div>
+
+        <div class="action-row">
+            <button id="bet50Button">Bet 50</button>
+            <button id="bet100Button">Bet 100</button>
+            <button id="checkButton">Check</button>
+            <button id="callButton">Call</button>
+            <button id="foldButton">Fold</button>
+        </div>
+
+        <div class="action-row">
+            <label for="raiseAmountInput" class="sr-only">Raise amount</label>
+            <input id="raiseAmountInput" type="number" min="1" placeholder="Raise amount">
+            <button id="raiseButton">Raise</button>
+        </div>
+    </section>
+</main>
 
 <script src="room.js"></script>
+</body>
+</html>

@@ -58,7 +58,7 @@ const foldButton = document.getElementById("foldButton") as HTMLButtonElement | 
 const raiseButton = document.getElementById("raiseButton") as HTMLButtonElement | null;
 const raiseAmountInput = document.getElementById("raiseAmountInput") as HTMLInputElement | null;
 
-const availableActionsTextElement = document.getElementById("availableActionsText");
+const tablePotDisplayElement = document.getElementById("tablePotDisplay");
 
 function updateAvailableActions(room: Room): void {
     const me = room.players.find(
@@ -90,11 +90,6 @@ function updateAvailableActions(room: Room): void {
         foldButton && (foldButton.disabled = true);
         raiseButton && (raiseButton.disabled = true);
 
-        if (availableActionsTextElement) {
-            availableActionsTextElement.innerText = canStartRound
-                ? "Available actions: Start Round"
-                : "Available actions: waiting for your turn";
-        }
         return;
     }
 
@@ -118,10 +113,6 @@ function updateAvailableActions(room: Room): void {
     if (canCall) actions.push("call");
     if (canRaise) actions.push("raise");
     actions.push("fold");
-
-    if (availableActionsTextElement) {
-        availableActionsTextElement.innerText = `Available actions: ${actions.join(", ")}`;
-    }
 }
 
 if (!chipCountElement) {
@@ -175,6 +166,10 @@ function renderGameState(room: Room): void {
         const currentPlayer = room.players[room.currentPlayerIndex];
         currentPlayerTextElement.innerText = `Current Player: ${currentPlayer ? currentPlayer.name : "-"}`;
     }
+
+    if (tablePotDisplayElement) {
+        tablePotDisplayElement.innerText = `Pot: ${room.pot}`;
+    }
 }
 async function refreshGameState(): Promise<void> {
     const room = await getRoom();
@@ -199,7 +194,7 @@ function renderPlayers(players: Player[], currentPlayerIndex?: number): void {
         }
 
         if (i === currentPlayerIndex) {
-            listItem.style.color = "blue";
+            listItem.style.color = "green";
         }
 
         if (player.name.toLowerCase() === playerName.toLowerCase()) {
