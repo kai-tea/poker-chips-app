@@ -21,6 +21,7 @@ type Player = {
     name: string;
     chips: number;
     currentRoundBet: number;
+    folded: boolean;
 };
 
 // @ts-ignore
@@ -45,16 +46,82 @@ const roomInfoElement = document.getElementById("roomInfo");
 const chipCountElement = document.getElementById("chipCount");
 const playerListElement = document.getElementById("playerList");
 
-const bet50Button = document.getElementById("bet50Button");
-const bet100Button = document.getElementById("bet100Button");
-const resetChipsButton = document.getElementById("resetChipsButton");
+const bet50Button = document.getElementById("bet50Button") as HTMLButtonElement | null;
+const bet100Button = document.getElementById("bet100Button") as HTMLButtonElement | null;
+const resetChipsButton = document.getElementById("resetChipsButton") as HTMLButtonElement | null;
 
-const startRoundButton = document.getElementById("startRoundButton");
-const checkButton = document.getElementById("checkButton");
-const callButton = document.getElementById("callButton");
-const foldButton = document.getElementById("foldButton");
-const raiseButton = document.getElementById("raiseButton");
+const startRoundButton = document.getElementById("startRoundButton") as HTMLButtonElement | null;
+const checkButton = document.getElementById("checkButton") as HTMLButtonElement | null;
+const callButton = document.getElementById("callButton") as HTMLButtonElement | null;
+const foldButton = document.getElementById("foldButton") as HTMLButtonElement | null;
+const raiseButton = document.getElementById("raiseButton") as HTMLButtonElement | null;
 const raiseAmountInput = document.getElementById("raiseAmountInput") as HTMLInputElement | null;
+
+const availableActionsTextElement = document.getElementById("availableActionsText");
+
+function updateAvailableActions(room: Room): void {
+    const me = room.players.find(
+        player => player.name.toLowerCase() === playerName.toLowerCase()
+    );
+
+    const currentPlayer = room.players[room.currentPlayerIndex];
+    const isMyTurn =
+        !!me &&
+        !!currentPlayer &&
+        currentPlayer.name.toLowerCase() === playerName.toLowerCase();
+
+    const inActiveRound =
+        room.phase !== "WITING_FOR_PLAYERS" &&
+        room.phase !== "ROUND_OVER" &&
+        room.phase !== "SHOWDOWN";
+
+    const canStartRound = room.phase === "WAITING_FOR_PLAYERS" || room.phase === "ROUND_OVER";
+
+    if (startRoundButton) {
+        startRoundButton.disabled = !canStartRound;
+    }
+
+    if (!me || !inActiveRound || me.folded || !isMyTurn) {
+        bet50Button && (bet50Button.disabled = true);
+        bet100Button && (bet100Button.disabled = true);
+        checkButton && (checkButton.disabled = true);
+        callButton && (callButton.disabled = true);
+        foldButton && (foldButton.disabled = true);
+        raiseButton && (raiseButton.disabled = true);
+
+        if (availableActionsTextElement) {
+            availableActionsTextElement.innerText = canStartRound
+                ? "Available actions: Start Round"
+                : "Available actions: waiting for your turn";
+        }
+        return;
+    }
+
+    const mustCall = me.currentRoundBet < room.currentBet;
+    const canCheck = me.currentRoundBet === room.currentBet;
+    const canBet = room.currentBet === 0;
+    const canCall = mustCall;
+    const canRaise = room.currentBet > 0;
+
+    bet50Button && (bet50Button.disabled = !canBet);
+    bet100Button && (bet100Button.disabled = !canBet);
+
+    checkButton && (checkButton.disabled = !canCheck);
+    callButton && (callButton.disabled = !canCall);
+    foldButton && (foldButton.disabled = false);
+    raiseButton && (raiseButton.disabled = !canRaise);
+
+    const actions: string[] = [];
+    if (canBet) actions.push("bet");
+    if (canCheck) actions.push("check");
+    if (canCall) actions.push("call");
+    if (canRaise) actions.push("raise");
+    actions.push("fold");
+
+    if (availableActionsTextElement) {
+        availableActionsTextElement.innerText = `Available actions: ${actions.join(", ")}`;
+    }
+}
 
 if (!chipCountElement) {
     throw new Error("Element #chipCount not found");
@@ -97,20 +164,30 @@ async function refreshGameState(): Promise<void> {
 function setChipCount(text: string): void {
     chipCountEl.innerText = text;
 }
-function renderPlayers(players: Player[]): void {
+function renderPlayers(players: Player[], currentPlayerIndex?: number): void {
     if (!playerListElement) return;
 
     playerListElement.innerHTML = "";
 
-    for (const player of players) {
+    for (let i = 0; i < players.length; i++) {
+        const player = players[i];
         const listItem = document.createElement("li");
-        //listItem.innerText = `${player.name}: ${player.chips} chips (bet: ${player.currentRoundBet})`;
-        listItem.innerText = `${player.name} - chips: ${player.chips}, round bet: ${player.currentRoundBet}`;
+
+        let text = `${player.name} - chips: ${player.chips}, round bet: ${player.currentRoundBet}`;
+
+        if (player.folded) {
+            text += " (folded)";
+        }
+
+        if (i === currentPlayerIndex) {
+            text += " <- current turn";
+        }
 
         if (player.name.toLowerCase() === playerName.toLowerCase()) {
             listItem.style.fontWeight = "bold";
         }
 
+        listItem.innerText = text;
         playerListElement.appendChild(listItem);
     }
 }
@@ -243,14 +320,14 @@ async function raise(): Promise<void> {
         throw new Error(await response.text());
     }
 }
-async function refreshPlayers(): Promise<void> {
-    const players = await getPlayers();
-    renderPlayers(players);
-}
+
 async function refreshRoom(): Promise<void> {
+    const room = await getRoom();
+
+    renderGameState(room);
+    renderPlayers(room.players, room.currentPlayerIndex);
+    updateAvailableActions(room);
     await getChipCount();
-    await refreshPlayers();
-    await refreshGameState();
 }
 
 if (roomTitleElement) {
