@@ -40,6 +40,11 @@ type Room = {
     dealerIndex: number;
     players: Player[];
     waitingPlayers?: string[];
+    settings: {
+        startingChips: number;
+        bigBlind: number;
+        smallBlind: number;
+    };
 };
 
 // game state elements
@@ -78,11 +83,15 @@ const resolveShowdownButton = document.getElementById("resolveShowdownButton") a
 
 const communityCardsElement = document.getElementById("communityCards");
 
+const decrementBetButton = document.getElementById("decrementBetButton") as HTMLButtonElement | null;
+const incrementBetButton = document.getElementById("incrementBetButton") as HTMLButtonElement | null;
+
 //host
 const hostChipsSection = document.getElementById("hostChipsSection");
 const hostPlayerSelect = document.getElementById("hostPlayerSelect") as HTMLSelectElement | null;
 const hostChipsInput = document.getElementById("hostChipsInput") as HTMLInputElement | null;
 const setPlayerChipsButton = document.getElementById("setPlayerChipsButton") as HTMLButtonElement | null;
+
 
 if (!chipCountElement) {
     throw new Error("Element #chipCount not found");
@@ -441,9 +450,6 @@ function renderPreCheckFold(room: Room): void {
         preCheckFoldButton.classList.remove("active");
     }
 }
-function getSliderAmount(): number {
-    return Number(betRaiseSlider?.value || "0");
-}
 function updateBetRaiseControls(room: Room): void {
     if (!betRaiseSlider || !betRaiseActionButton || !betRaiseValue) return;
 
@@ -474,11 +480,14 @@ function updateBetRaiseControls(room: Room): void {
     betRaiseSlider.disabled = !canAct;
     betRaiseActionButton.disabled = !canAct;
 
-    betRaiseSlider.min = "1";
-    betRaiseSlider.max = String(Math.max(me.chips, 1));
+    const hundredBbCap = room.settings.bigBlind * 100;
+    const sliderMax = Math.max(1, Math.min(me.chips, hundredBbCap));
 
-    if (Number(betRaiseSlider.value) > me.chips) {
-        betRaiseSlider.value = String(Math.max(me.chips, 1));
+    betRaiseSlider.min = "1";
+    betRaiseSlider.max = String(sliderMax);
+
+    if (Number(betRaiseSlider.value) > sliderMax) {
+        betRaiseSlider.value = String(sliderMax);
     }
 
     const amount = Number(betRaiseSlider.value);
@@ -489,6 +498,8 @@ function updateBetRaiseControls(room: Room): void {
     } else {
         betRaiseActionButton.innerText = `Raise ${amount}`;
     }
+
+    updateSliderFill();
 }
 function updateAvailableActions(room: Room): void {
     const me = room.players.find(
@@ -569,6 +580,46 @@ function updateAvailableActions(room: Room): void {
     if (checkFoldButton) {
         checkFoldButton.innerText = canCheck ? "Check / Fold" : "Check / Fold";
     }
+}
+function getSliderAmount(): number {
+    return Number(betRaiseSlider?.value || "0");
+}
+function updateSliderFill(): void {
+    if (!betRaiseSlider) return;
+
+    const min = Number(betRaiseSlider.min);
+    const max = Number(betRaiseSlider.max);
+    const value = Number(betRaiseSlider.value);
+
+    const percentage = max > min ? ((value - min) / (max - min)) * 100 : 0;
+    betRaiseSlider.style.setProperty("--fill-size", `${percentage}%`);
+}
+function renderSliderValue(): void {
+    if (betRaiseValue && betRaiseSlider) {
+        betRaiseValue.innerText = betRaiseSlider.value;
+    }
+
+    updateSliderFill();
+}
+function incrementSlider(): void {
+    if (!betRaiseSlider) return;
+
+    const step = Number(betRaiseSlider.step || "1");
+    const max = Number(betRaiseSlider.max);
+    const current = Number(betRaiseSlider.value);
+
+    betRaiseSlider.value = String(Math.min(current + step, max));
+    renderSliderValue();
+}
+function decrementSlider(): void {
+    if (!betRaiseSlider) return;
+
+    const step = Number(betRaiseSlider.step || "1");
+    const min = Number(betRaiseSlider.min);
+    const current = Number(betRaiseSlider.value);
+
+    betRaiseSlider.value = String(Math.max(current - step, min));
+    renderSliderValue();
 }
 
 
@@ -950,6 +1001,32 @@ betRaiseActionButton?.addEventListener("click", async () => {
     } catch (err) {
         console.error(err);
         setChipCount("Bet / Raise failed");
+    }
+});
+betRaiseSlider?.addEventListener("input", async () => {
+    try {
+        const room = await getRoom();
+        updateBetRaiseControls(room);
+    } catch (err) {
+        console.error(err);
+    }
+});
+incrementBetButton?.addEventListener("click", async () => {
+    try {
+        incrementSlider();
+        const room = await getRoom();
+        updateBetRaiseControls(room);
+    } catch (err) {
+        console.error(err);
+    }
+});
+decrementBetButton?.addEventListener("click", async () => {
+    try {
+        decrementSlider();
+        const room = await getRoom();
+        updateBetRaiseControls(room);
+    } catch (err) {
+        console.error(err);
     }
 });
 

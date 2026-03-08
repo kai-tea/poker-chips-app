@@ -23,6 +23,8 @@ public class Room {
     private int pot = 0;
     private int currentPlayerIndex = 0;
     private int currentBet = 0;
+    private int smallBlindIndex = -1;
+    private int bigBlindIndex = -1;
 
 
     public Room() {}
@@ -73,56 +75,63 @@ public class Room {
 
 
     // Getters and Setters
+    public void setWaitingPlayers(List<String> waitingPlayers) {
+        this.waitingPlayers = waitingPlayers;
+    }
+    public int getSmallBlindIndex() {
+        return smallBlindIndex;
+    }
+    public void setSmallBlindIndex(int smallBlindIndex) {
+        this.smallBlindIndex = smallBlindIndex;
+    }
+    public int getBigBlindIndex() {
+        return bigBlindIndex;
+    }
+    public void setBigBlindIndex(int bigBlindIndex) {
+        this.bigBlindIndex = bigBlindIndex;
+    }
     public List<String> getWaitingPlayers() {
         return waitingPlayers;
     }
-
     public int getActivePlayerCount() {
         return players.size();
     }
-
     public String getCode() {
         return code;
     }
     public void setCode(String code) {
         this.code = code;
     }
-
     public int getDealerIndex() {
         return dealerIndex;
     }
     public void setDealerIndex(int dealerIndex) {
         this.dealerIndex = dealerIndex;
     }
-
     public GamePhase getPhase() {
         return phase;
     }
     public void setPhase(GamePhase phase) {
         this.phase = phase;
     }
-
     public int getPot() {
         return pot;
     }
     public void setPot(int pot) {
         this.pot = pot;
     }
-
     public int getCurrentPlayerIndex() {
         return currentPlayerIndex;
     }
     public void setCurrentPlayerIndex(int currentPlayerIndex) {
         this.currentPlayerIndex = currentPlayerIndex;
     }
-
     public int getCurrentBet() {
         return currentBet;
     }
     public void setCurrentBet(int currentBet) {
         this.currentBet = currentBet;
     }
-
     public Player getPlayer(String name){
         for (Player p : players){
             if (p.getName().equals(name)){
@@ -131,28 +140,24 @@ public class Room {
         }
         throw new IllegalArgumentException("Player: " + name + " not found in Room: " + code);
     }
-
     public String getHost() {
         return host;
     }
     public void setHost(String host) {
         this.host = host;
     }
-
     public String getId() {
         return id;
     }
     public void setId(String id) {
         this.id = id;
     }
-
     public List<Player> getPlayers() {
         return players;
     }
     public void setPlayers(List<Player> players) {
         this.players = players;
     }
-
     public RoomSettings getSettings() {
         return settings;
     }

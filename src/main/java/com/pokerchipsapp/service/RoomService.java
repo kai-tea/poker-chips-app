@@ -347,7 +347,7 @@ public class RoomService {
 
     // game flow
     // round
-    public void startRound(String code){
+    public void startRound(String code) {
         Room room = get(code);
 
         room.moveWaitingPlayers();
@@ -355,16 +355,41 @@ public class RoomService {
         if (room.getPlayerCount() <= 1) {
             throw new IllegalStateException("Not enough players to start round");
         }
+
         if (room.getPhase() != WAITING_FOR_PLAYERS && room.getPhase() != ROUND_OVER) {
             throw new IllegalStateException("Round already started");
         }
 
         room.rotateDealer();
-
         resetRoundState(room);
-
         room.setPhase(PRE_FLOP);
-        room.setCurrentPlayerIndex(0);
+
+        int dealerIndex = room.getDealerIndex();
+        int smallBlindIndex;
+        int bigBlindIndex;
+        int firstToActIndex;
+
+        if (room.getPlayerCount() == 2) {
+            smallBlindIndex = dealerIndex;
+            bigBlindIndex = getNextActivePlayerIndex(room, dealerIndex);
+            firstToActIndex = dealerIndex;
+        } else {
+            smallBlindIndex = getNextActivePlayerIndex(room, dealerIndex);
+            bigBlindIndex = getNextActivePlayerIndex(room, smallBlindIndex);
+            firstToActIndex = getNextActivePlayerIndex(room, bigBlindIndex);
+        }
+
+        int smallBlindAmount = room.getSettings().getSmallBlind();
+        int bigBlindAmount = room.getSettings().getBigBlind();
+
+        int postedSmallBlind = postBlind(room, smallBlindIndex, smallBlindAmount, "SB");
+        int postedBigBlind = postBlind(room, bigBlindIndex, bigBlindAmount, "BB");
+
+        room.setCurrentBet(Math.max(postedSmallBlind, postedBigBlind));
+        room.setCurrentPlayerIndex(firstToActIndex);
+
+        room.setSmallBlindIndex(smallBlindIndex);
+        room.setBigBlindIndex(bigBlindIndex);
 
         repo.save(room);
     }
@@ -585,4 +610,32 @@ public class RoomService {
         }
     }
 
+    private int getNextActivePlayerIndex(Room room, int startIndex) {
+        List<Player> players = room.getPlayers();
+        int size = players.size();
+
+        for (int step = 1; step <= size; step++) {
+            int nextIndex = (startIndex + step) % size;
+            Player nextPlayer = players.get(nextIndex);
+
+            if (!nextPlayer.isFolded()) {
+                return nextIndex;
+            }
+        }
+
+        throw new IllegalStateException("No active player found");
+    }
+
+    private int postBlind(Room room, int playerIndex, int blindAmount, String actionName) {
+        Player player = room.getPlayers().get(playerIndex);
+        int posted = Math.min(player.getChips(), blindAmount);
+
+        player.setChips(player.getChips() - posted);
+        player.setCurrentRoundBet(posted);
+        player.setLastAction(actionName);
+
+        room.setPot(room.getPot() + posted);
+
+        return posted;
+    }
 }

@@ -84,10 +84,23 @@
 
         </div>
 
-        <div class="action-row slider-row">
-            <label for="betRaiseSlider">Amount</label>
-            <input id="betRaiseSlider" type="range" min="1" max="1000" value="50" step="10">
-            <span id="betRaiseValue">50</span>
+        <div class="bet-form-controls">
+            <button id="decrementBetButton" class="tune-btn" type="button">–</button>
+
+            <div class="slider-wrapper">
+                <input
+                        id="betRaiseSlider"
+                        type="range"
+                        min="1"
+                        max="1000"
+                        value="50"
+                        step="5"
+                >
+            </div>
+
+            <button id="incrementBetButton" class="tune-btn" type="button">+</button>
+
+            <span id="betRaiseValue" class="bet-amount-value">50</span>
             <button id="betRaiseActionButton">Bet 50</button>
         </div>
 
