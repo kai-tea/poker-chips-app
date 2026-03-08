@@ -8,21 +8,41 @@ import com.pokerchipsapp.repo.RoomRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Random;
 
 import static com.pokerchipsapp.model.GamePhase.*;
 
 @Service
 public class RoomService {
     private final RoomRepository repo;
+    private final Random random = new Random();
 
-    // room
     public RoomService(RoomRepository repo) {
         this.repo = repo;
     }
-    public Room create(String code, String host, RoomSettings settings) {
-        return repo
-                .findRoomByCode(code)
-                .orElseGet(() -> repo.save(new Room(code, host, settings)));
+
+    private String generateRoomCode() {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+        while (true) {
+            StringBuilder code = new StringBuilder();
+
+            for (int i = 0; i < 6; i++) {
+                int index = random.nextInt(chars.length());
+                code.append(chars.charAt(index));
+            }
+
+            String generatedCode = code.toString();
+
+            if (repo.findRoomByCode(generatedCode).isEmpty()) {
+                return generatedCode;
+            }
+        }
+    }
+
+    public Room create(String host, RoomSettings settings) {
+        String code = generateRoomCode();
+        return repo.save(new Room(code, host, settings));
     }
     public Room get(String code){
         return repo

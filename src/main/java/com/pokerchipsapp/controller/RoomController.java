@@ -31,15 +31,13 @@ public class RoomController {
     public Room createRoom(@RequestBody CreateRoomRequest body){
         if (body == null) throw new IllegalArgumentException("Request body required");
 
-        String code = body.getCode();
         String host = body.getHost();
         RoomSettings settings = body.getSettings();
 
-        if (code == null || code.isBlank()) throw new IllegalArgumentException("code required");
         if (host == null || host.isBlank()) throw new IllegalArgumentException("host required");
         if (settings == null) settings = getDefaultSettings();
 
-        return roomService.create(code, host, settings);
+        return roomService.create(host, settings);
     }
 
     @GetMapping("/{code}")

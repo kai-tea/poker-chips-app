@@ -408,11 +408,17 @@ async function refreshRoom(): Promise<void> {
     const isActivePlayer = room.players.some(
         player => player.name.toLowerCase() === playerName.toLowerCase()
     );
+    const isWaitingPlayer = (room.waitingPlayers ?? []).some(
+        name => name.toLowerCase() === playerName.toLowerCase()
+    );
+
 
     if (isActivePlayer) {
         await getChipCount();
-    } else {
+    } else if (isWaitingPlayer) {
         setChipCount("You are waiting for the next round");
+    } else {
+        setChipCount("You are not seated in this room");
     }
 }
 async function resolveShowdown(): Promise<void> {
