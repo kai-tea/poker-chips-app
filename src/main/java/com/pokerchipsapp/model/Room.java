@@ -37,7 +37,14 @@ public class Room {
     public void addPlayer(String name){
         if (name.isBlank()) return;
 
-        if (containsPlayer(name)) return;
+        boolean alreadyExists = players.stream()
+                .anyMatch(p -> p.getName().equalsIgnoreCase(name));
+
+        if (alreadyExists) return;
+
+        if (getPlayerCount() >= 10) {
+            throw new IllegalStateException("Room is full");
+        }
 
         int seatIndex = getPlayerCount();
         players.add(new Player(name, settings.getStartingChips(), seatIndex));

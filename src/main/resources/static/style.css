@@ -287,8 +287,9 @@ main input {
 }
 
 .seat {
+    display: none;
     position: absolute;
-    min-width: 120px;
+    min-width: 110px;
     padding: 10px 12px;
     border-radius: 14px;
     background: rgba(10, 14, 22, 0.45);
@@ -296,53 +297,47 @@ main input {
     color: rgba(255,255,255,0.82);
     text-align: center;
     backdrop-filter: blur(4px);
-}
-
-.seat-label {
     font-size: 0.9rem;
-    font-weight: 600;
 }
 
-.seat-top {
-    top: 22px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.seat-right {
-    top: 50%;
-    right: 24px;
-    transform: translateY(-50%);
-}
-
-.seat-bottom {
-    bottom: 22px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.seat-left {
-    top: 50%;
-    left: 24px;
-    transform: translateY(-50%);
-}
+/* 10-handed layout around the oval */
+.seat-0 { top: 18px; left: 50%; transform: translateX(-50%); }
+.seat-1 { top: 42px; right: 120px; }
+.seat-2 { top: 120px; right: 24px; }
+.seat-3 { top: 50%; right: 24px; transform: translateY(-50%); }
+.seat-4 { bottom: 42px; right: 120px; }
+.seat-5 { bottom: 18px; left: 50%; transform: translateX(-50%); }
+.seat-6 { bottom: 42px; left: 120px; }
+.seat-7 { top: 50%; left: 24px; transform: translateY(-50%); }
+.seat-8 { top: 120px; left: 24px; }
+.seat-9 { top: 42px; left: 120px; }
 
 /* ---------- Responsive ---------- */
 
 @media (max-width: 800px) {
-    .room-header {
-        flex-direction: column;
-        align-items: stretch;
+    .poker-table {
+        min-height: 360px;
+        border-radius: 160px;
     }
 
-    .stats-grid,
-    .content-grid {
-        grid-template-columns: 1fr;
+    .seat {
+        display: none;
+        min-width: 84px;
+        padding: 8px 10px;
+        font-size: 0.8rem;
     }
 
     .poker-table {
-        min-height: 300px;
-        border-radius: 120px;
+        position: relative;
+        width: 100%;
+        min-height: 430px;
+        border-radius: 220px;
+        background: radial-gradient(circle at center, var(--table-felt) 0%, var(--table-felt-dark) 100%);
+        border: 14px solid var(--table-rail);
+        box-shadow:
+                inset 0 0 0 4px rgba(255,255,255,0.08),
+                0 18px 40px rgba(0,0,0,0.35);
+        overflow: hidden;
     }
 
     .seat {

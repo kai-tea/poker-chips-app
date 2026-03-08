@@ -22,6 +22,7 @@ type Player = {
     chips: number;
     currentRoundBet: number;
     folded: boolean;
+    seatIndex: number;
 };
 
 // @ts-ignore
@@ -250,19 +251,46 @@ function renderTableSeats(room: Room): void {
         document.getElementById("seat1"),
         document.getElementById("seat2"),
         document.getElementById("seat3"),
+        document.getElementById("seat4"),
+        document.getElementById("seat5"),
+        document.getElementById("seat6"),
+        document.getElementById("seat7"),
+        document.getElementById("seat8"),
+        document.getElementById("seat9"),
     ];
 
     for (let i = 0; i < seatElements.length; i++) {
         const seatEl = seatElements[i];
         if (!seatEl) continue;
 
-        const player = room.players.find((p: any) => p.seatIndex === i);
+        const seatContainer = seatEl.parentElement;
+        const player = room.players.find(player => player.seatIndex === i);
 
-        if (player) {
-            seatEl.textContent = `${player.name} (${player.chips})`;
-        } else {
-            seatEl.textContent = `Seat ${i + 1}`;
+        if (!seatContainer) continue;
+
+        if (!player) {
+            seatContainer.style.display = "none";
+            seatEl.textContent = "";
+            continue;
         }
+
+        seatContainer.style.display = "block";
+
+        let text = `${player.name} (${player.chips})`;
+
+        if (player.currentRoundBet > 0) {
+            text += ` | bet ${player.currentRoundBet}`;
+        }
+
+        if (player.folded) {
+            text += ` | folded`;
+        }
+
+        if (i === room.currentPlayerIndex) {
+            text += ` | turn`;
+        }
+
+        seatEl.textContent = text;
     }
 }
 

@@ -50,7 +50,13 @@ public class RoomService {
                 .orElseThrow(() -> new IllegalArgumentException("Room not found " + code));
     }
     public Room join(String code, String name){
+
         Room room = get(code);
+
+        int totalPlayers = room.getPlayers().size() + room.getWaitingPlayers().size();
+        if (totalPlayers >= 10) {
+            throw new IllegalStateException("Room is full");
+        }
 
         if (room.getPhase() == WAITING_FOR_PLAYERS || room.getPhase() == ROUND_OVER) {
             room.addPlayer(name);
