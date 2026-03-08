@@ -32,7 +32,7 @@ type Room = {
     currentBet: number;
     currentPlayerIndex: number;
     players: Player[];
-    waiting_players?: string[];
+    waitingPlayers?: string[];
 };
 
 // game state elements
@@ -45,6 +45,7 @@ const roomTitleElement = document.getElementById("roomTitle");
 const roomInfoElement = document.getElementById("roomInfo");
 const chipCountElement = document.getElementById("chipCount");
 const playerListElement = document.getElementById("playerList");
+const waitingPlayersListElement = document.getElementById("waitingPlayersList");
 
 const bet50Button = document.getElementById("bet50Button") as HTMLButtonElement | null;
 const bet100Button = document.getElementById("bet100Button") as HTMLButtonElement | null;
@@ -130,6 +131,24 @@ if (!chipCountElement) {
 const chipCountEl: HTMLElement = chipCountElement;
 
 // game state functions
+function renderWaitingPlayers(waitingPlayers: string[] = []): void {
+    if (!waitingPlayersListElement) return;
+
+    waitingPlayersListElement.innerHTML = "";
+
+    if (waitingPlayers.length === 0) {
+        const listItem = document.createElement("li");
+        listItem.innerText = "No waiting players";
+        waitingPlayersListElement.appendChild(listItem);
+        return;
+    }
+
+    for (const name of waitingPlayers) {
+        const listItem = document.createElement("li");
+        listItem.innerText = name;
+        waitingPlayersListElement.appendChild(listItem);
+    }
+}
 async function getRoom(): Promise<Room> {
     const response = await fetch(`/room/${encodeURIComponent(roomCode)}`);
 
@@ -180,7 +199,7 @@ function renderPlayers(players: Player[], currentPlayerIndex?: number): void {
         }
 
         if (i === currentPlayerIndex) {
-            text += " <- current turn";
+            listItem.style.color = "blue";
         }
 
         if (player.name.toLowerCase() === playerName.toLowerCase()) {
@@ -326,8 +345,18 @@ async function refreshRoom(): Promise<void> {
 
     renderGameState(room);
     renderPlayers(room.players, room.currentPlayerIndex);
+    renderWaitingPlayers(room.waitingPlayers ?? []);
     updateAvailableActions(room);
-    await getChipCount();
+
+    const isActivePlayer = room.players.some(
+        player => player.name.toLowerCase() === playerName.toLowerCase()
+    );
+
+    if (isActivePlayer) {
+        await getChipCount();
+    } else {
+        setChipCount("You are waiting for the next round");
+    }
 }
 
 if (roomTitleElement) {

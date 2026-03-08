@@ -1,11 +1,6 @@
 package com.pokerchipsapp.controller;
 
-import com.pokerchipsapp.dto.AddPlayerRequest;
-import com.pokerchipsapp.dto.BetRequest;
-import com.pokerchipsapp.dto.CreateRoomRequest;
-import com.pokerchipsapp.dto.JoinRoomRequest;
-import com.pokerchipsapp.dto.NameRequest;
-import com.pokerchipsapp.dto.RaiseRequest;
+import com.pokerchipsapp.dto.*;
 import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
@@ -115,5 +110,10 @@ public class RoomController {
     @PostMapping("/{code}/join")
     public Room joinRoom(@RequestBody JoinRoomRequest body){
         return roomService.join(body.getCode(), body.getName());
+    }
+
+    @GetMapping("/{code}/players/{name}/status")
+    public PlayerStatusResponse getPlayerStatus(@PathVariable String code, @PathVariable String name) {
+        return roomService.getPlayerStatus(code, name);
     }
 }

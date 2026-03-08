@@ -1,5 +1,6 @@
 package com.pokerchipsapp.service;
 
+import com.pokerchipsapp.dto.PlayerStatusResponse;
 import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
@@ -84,6 +85,23 @@ public class RoomService {
 
         repo.save(room);
     } // deletes all players except the host
+    public PlayerStatusResponse getPlayerStatus(String code, String name) {
+        Room room = get(code);
+
+        for (Player p : room.getPlayers()) {
+            if (p.getName().equalsIgnoreCase(name)) {
+                return new PlayerStatusResponse(name, true, false, p.getChips());
+            }
+        }
+
+        for (String waitingName : room.getWaitingPlayers()) {
+            if (waitingName.equalsIgnoreCase(name)) {
+                return new PlayerStatusResponse(name, false, true, null);
+            }
+        }
+
+        throw new IllegalArgumentException("Player not found: " + name + " in room: " + code);
+    }
 
     // chips
     public void setChips(String code, String name, int amount){
