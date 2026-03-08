@@ -8,6 +8,7 @@ import java.util.Objects;
 public class Player {
     private String name;
     private int chips;
+    private boolean preCheckFold = false;
 
     // game flow
     private int seatIndex;
@@ -21,6 +22,13 @@ public class Player {
         this.name = name;
         this.chips = chips;
         this.seatIndex = seatIndex;
+    }
+
+    public boolean isPreCheckFold() {
+        return preCheckFold;
+    }
+    public void setPreCheckFold(boolean preCheckFold) {
+        this.preCheckFold = preCheckFold;
     }
 
     public boolean isFolded() {

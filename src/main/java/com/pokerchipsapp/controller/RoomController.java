@@ -124,4 +124,9 @@ public class RoomController {
     public void setPlayerChips(@PathVariable String code, @RequestBody SetPlayerChipsRequest body) {
         roomService.setPlayerChipsAsHost(code, body.getHostName(), body.getPlayerName(), body.getChips());
     }
+
+    @PostMapping("/{code}/pre-check-fold")
+    public void setPreCheckFold(@PathVariable String code, @RequestBody PreCheckFoldRequest body) {
+        roomService.setPreCheckFold(code, body.getName(), body.isEnabled());
+    }
 }

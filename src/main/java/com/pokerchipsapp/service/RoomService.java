@@ -323,6 +323,21 @@ public class RoomService {
         afterAction(room);
         repo.save(room);
     }
+    public void setPreCheckFold(String code, String name, boolean enabled) {
+        Room room = get(code);
+        Player player = room.getPlayer(name);
+
+        if (player.isFolded()) {
+            throw new IllegalStateException("Folded player cannot queue actions");
+        }
+
+        if (room.getPhase() == WAITING_FOR_PLAYERS || room.getPhase() == SHOWDOWN || room.getPhase() == ROUND_OVER) {
+            throw new IllegalStateException("No active round");
+        }
+
+        player.setPreCheckFold(enabled);
+        repo.save(room);
+    }
 
     // game flow
     // round
@@ -411,6 +426,7 @@ public class RoomService {
 
 
     // game flow helpers
+    // resets Pot, currentBet, and actions of every player
     private void resetRoundState(Room room) {
         room.setPot(0);
         room.setCurrentBet(0);
@@ -419,16 +435,17 @@ public class RoomService {
             p.setFolded(false);
             p.setActedThisRound(false);
             p.setCurrentRoundBet(0);
+            p.setPreCheckFold(false);
         }
-    } // resets Pot, currentBet, and actions of every player
+    }
     private void afterAction(Room room) {
         if (isBettingRoundComplete(room)) {
             advancePhase(room);
         } else {
             moveToNextPlayer(room);
+            applyQueuedActionIfNeeded(room);
         }
-    }
-    private void moveToNextPlayer(Room room) {
+    }    private void moveToNextPlayer(Room room) {
         List<Player> players = room.getPlayers();
         int size = players.size();
 
@@ -521,5 +538,33 @@ public class RoomService {
         }
     }
 
+    private void applyQueuedActionIfNeeded(Room room) {
+        Player currentPlayer = room.getPlayers().get(room.getCurrentPlayerIndex());
+
+        if (!currentPlayer.isPreCheckFold()) {
+            return;
+        }
+
+        currentPlayer.setPreCheckFold(false);
+
+        if (currentPlayer.getCurrentRoundBet() == room.getCurrentBet()) {
+            currentPlayer.setActedThisRound(true);
+        } else {
+            currentPlayer.setFolded(true);
+            currentPlayer.setActedThisRound(true);
+        }
+
+        if (getActivePlayers(room).size() == 1) {
+            room.setPhase(ROUND_OVER);
+            return;
+        }
+
+        if (isBettingRoundComplete(room)) {
+            advancePhase(room);
+        } else {
+            moveToNextPlayer(room);
+            applyQueuedActionIfNeeded(room);
+        }
+    }
 
 }

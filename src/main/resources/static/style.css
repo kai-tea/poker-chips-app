@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Roboto+Mono&display=swap');
 
 html,
 body {
@@ -11,7 +11,7 @@ body {
     min-height: 100vh;
     background: linear-gradient(180deg, #0b0d12 0%, #111522 100%);
     color: var(--text);
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: "Manrope", system-ui, sans-serif;
     overscroll-behavior-y: none;
 }
 
@@ -29,9 +29,16 @@ body {
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     --radius: 18px;
 
-    --table-felt: #0f6b43;
+    --table-felt: #1d9561;
     --table-felt-dark: #0a4f31;
-    --table-rail: #4b2e1f;
+    --table-rail: #040323;
+}
+
+.room-title,
+.card-title,
+main h1 {
+    font-weight: 800;
+    letter-spacing: -0.02em;
 }
 
 * {
@@ -320,7 +327,7 @@ main input {
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     margin-top: 18px;
     flex-wrap: nowrap;
     width: 100%;
@@ -328,8 +335,8 @@ main input {
 
 .community-card {
     flex: 0 0 auto;
-    width: 72px;
-    height: 102px;
+    width: 56px;
+    height: 80px;
     border-radius: 12px;
     background:
             radial-gradient(circle at 20% 18%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 22%, transparent 22%),
@@ -354,7 +361,7 @@ main input {
 .community-card::before {
     content: "";
     position: absolute;
-    inset: 6px;
+    inset: 5px;
     border-radius: 8px;
     border: 2px solid rgba(43, 49, 66, 0.75);
     background:
@@ -435,6 +442,28 @@ main input {
             0 8px 20px rgba(0, 0, 0, 0.28);
 }
 
+#preCheckFoldButton.active {
+    background: var(--accent);
+    color: #04211c;
+    border-color: transparent;
+    font-weight: 700;
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+#betRaiseSlider {
+    width: 220px;
+}
+
+#betRaiseValue {
+    min-width: 40px;
+    font-weight: 700;
+}
 /* ---------- Responsive ---------- */
 
 @media (max-width: 800px) {

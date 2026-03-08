@@ -72,18 +72,23 @@
         </div>
 
         <div class="action-row">
+            <button id="preCheckFoldButton" type="button">Check/Fold</button>
+            <!--
             <button id="checkFoldButton">Check / Fold</button>
+            -->
             <button id="checkButton">Check</button>
             <button id="bet50Button">Bet 50</button>
             <button id="bet100Button">Bet 100</button>
             <button id="callButton">Call</button>
             <button id="foldButton">Fold</button>
+
         </div>
 
-        <div class="action-row">
-            <label for="raiseAmountInput" class="sr-only">Raise amount</label>
-            <input id="raiseAmountInput" type="number" min="1" placeholder="Raise amount">
-            <button id="raiseButton">Raise</button>
+        <div class="action-row slider-row">
+            <label for="betRaiseSlider">Amount</label>
+            <input id="betRaiseSlider" type="range" min="1" max="1000" value="50" step="10">
+            <span id="betRaiseValue">50</span>
+            <button id="betRaiseActionButton">Bet 50</button>
         </div>
 
         <div id="showdownSection" style="display: none;">

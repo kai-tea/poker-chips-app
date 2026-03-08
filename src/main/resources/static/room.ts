@@ -25,6 +25,7 @@ type Player = {
     currentRoundBet: number;
     folded: boolean;
     seatIndex: number;
+    preCheckFold: boolean;
 };
 
 // @ts-ignore
@@ -62,6 +63,10 @@ const foldButton = document.getElementById("foldButton") as HTMLButtonElement | 
 const checkFoldButton = document.getElementById("checkFoldButton") as HTMLButtonElement | null;
 const raiseButton = document.getElementById("raiseButton") as HTMLButtonElement | null;
 const raiseAmountInput = document.getElementById("raiseAmountInput") as HTMLInputElement | null;
+const preCheckFoldButton = document.getElementById("preCheckFoldButton") as HTMLButtonElement | null;
+const betRaiseSlider = document.getElementById("betRaiseSlider") as HTMLInputElement | null;
+const betRaiseValue = document.getElementById("betRaiseValue");
+const betRaiseActionButton = document.getElementById("betRaiseActionButton") as HTMLButtonElement | null;
 
 const tablePotDisplayElement = document.getElementById("tablePotDisplay");
 
@@ -76,87 +81,6 @@ const hostChipsSection = document.getElementById("hostChipsSection");
 const hostPlayerSelect = document.getElementById("hostPlayerSelect") as HTMLSelectElement | null;
 const hostChipsInput = document.getElementById("hostChipsInput") as HTMLInputElement | null;
 const setPlayerChipsButton = document.getElementById("setPlayerChipsButton") as HTMLButtonElement | null;
-
-function updateAvailableActions(room: Room): void {
-    const me = room.players.find(
-        player => player.name.toLowerCase() === playerName.toLowerCase()
-    );
-
-    const currentPlayer = room.players[room.currentPlayerIndex];
-
-    const isMyTurn =
-        !!me &&
-        !!currentPlayer &&
-        currentPlayer.name.toLowerCase() === playerName.toLowerCase();
-
-    const inActiveRound =
-        room.phase !== "WAITING_FOR_PLAYERS" &&
-        room.phase !== "ROUND_OVER" &&
-        room.phase !== "SHOWDOWN";
-
-    const canStartRound =
-        room.phase === "WAITING_FOR_PLAYERS" || room.phase === "ROUND_OVER";
-
-    const isHost =
-        !!room.host &&
-        room.host.toLowerCase() === playerName.toLowerCase();
-
-    const isShowdown = room.phase === "SHOWDOWN";
-
-    if (startRoundButton) {
-        startRoundButton.disabled = !canStartRound;
-    }
-
-    if (isShowdown) {
-        bet50Button && (bet50Button.disabled = true);
-        bet100Button && (bet100Button.disabled = true);
-        checkButton && (checkButton.disabled = true);
-        callButton && (callButton.disabled = true);
-        foldButton && (foldButton.disabled = true);
-        raiseButton && (raiseButton.disabled = true);
-        checkFoldButton && (checkFoldButton.disabled = true);
-
-        if (resolveShowdownButton) {
-            resolveShowdownButton.disabled = !isHost;
-        }
-
-        return;
-    }
-
-    if (resolveShowdownButton) {
-        resolveShowdownButton.disabled = true;
-    }
-
-    if (!me || !inActiveRound || me.folded || !isMyTurn) {
-        bet50Button && (bet50Button.disabled = true);
-        bet100Button && (bet100Button.disabled = true);
-        checkButton && (checkButton.disabled = true);
-        callButton && (callButton.disabled = true);
-        foldButton && (foldButton.disabled = true);
-        raiseButton && (raiseButton.disabled = true);
-        checkFoldButton && (checkFoldButton.disabled = true);
-        return;
-    }
-
-    const mustCall = me.currentRoundBet < room.currentBet;
-    const canCheck = me.currentRoundBet === room.currentBet;
-    const canBet = room.currentBet === 0;
-    const canCall = mustCall;
-    const canRaise = room.currentBet > 0;
-
-    bet50Button && (bet50Button.disabled = !canBet);
-    bet100Button && (bet100Button.disabled = !canBet);
-
-    checkButton && (checkButton.disabled = !canCheck);
-    callButton && (callButton.disabled = !canCall);
-    foldButton && (foldButton.disabled = false);
-    raiseButton && (raiseButton.disabled = !canRaise);
-    checkFoldButton && (checkFoldButton.disabled = false);
-
-    if (checkFoldButton) {
-        checkFoldButton.innerText = canCheck ? "Check / Fold" : "Check / Fold";
-    }
-}
 
 if (!chipCountElement) {
     throw new Error("Element #chipCount not found");
@@ -413,7 +337,185 @@ function renderHostChipControls(room: Room): void {
         hostPlayerSelect.appendChild(option);
     }
 }
+function renderPreCheckFold(room: Room): void {
+    if (!preCheckFoldButton) return;
 
+    const me = room.players.find(
+        player => player.name.toLowerCase() === playerName.toLowerCase()
+    );
+
+    if (!me) {
+        preCheckFoldButton.disabled = true;
+        //preCheckFoldButton.innerText = "Check/Fold: OFF";
+        return;
+    }
+
+    const currentPlayer = room.players[room.currentPlayerIndex];
+    const isMyTurn =
+        !!currentPlayer &&
+        currentPlayer.name.toLowerCase() === playerName.toLowerCase();
+
+    const inActiveRound =
+        room.phase !== "WAITING_FOR_PLAYERS" &&
+        room.phase !== "SHOWDOWN" &&
+        room.phase !== "ROUND_OVER";
+
+    preCheckFoldButton.disabled = !inActiveRound || me.folded || isMyTurn;
+    //preCheckFoldButton.innerText = me.preCheckFold ? "Check/Fold: ON" : "Check/Fold: OFF";
+
+    if (me.preCheckFold) {
+        preCheckFoldButton.classList.add("active");
+    } else {
+        preCheckFoldButton.classList.remove("active");
+    }
+}
+function getSliderAmount(): number {
+    return Number(betRaiseSlider?.value || "0");
+}
+function updateBetRaiseControls(room: Room): void {
+    if (!betRaiseSlider || !betRaiseActionButton || !betRaiseValue) return;
+
+    const me = room.players.find(
+        player => player.name.toLowerCase() === playerName.toLowerCase()
+    );
+
+    if (!me) {
+        betRaiseSlider.disabled = true;
+        betRaiseActionButton.disabled = true;
+        betRaiseActionButton.innerText = "Bet / Raise";
+        betRaiseValue.innerText = "0";
+        return;
+    }
+
+    const currentPlayer = room.players[room.currentPlayerIndex];
+    const isMyTurn =
+        !!currentPlayer &&
+        currentPlayer.name.toLowerCase() === playerName.toLowerCase();
+
+    const inActiveRound =
+        room.phase !== "WAITING_FOR_PLAYERS" &&
+        room.phase !== "SHOWDOWN" &&
+        room.phase !== "ROUND_OVER";
+
+    const canAct = inActiveRound && !me.folded && isMyTurn;
+
+    betRaiseSlider.disabled = !canAct;
+    betRaiseActionButton.disabled = !canAct;
+
+    betRaiseSlider.min = "1";
+    betRaiseSlider.max = String(Math.max(me.chips, 1));
+
+    if (Number(betRaiseSlider.value) > me.chips) {
+        betRaiseSlider.value = String(Math.max(me.chips, 1));
+    }
+
+    const amount = Number(betRaiseSlider.value);
+    betRaiseValue.innerText = String(amount);
+
+    if (room.currentBet === 0) {
+        betRaiseActionButton.innerText = `Bet ${amount}`;
+    } else {
+        betRaiseActionButton.innerText = `Raise ${amount}`;
+    }
+}
+function updateAvailableActions(room: Room): void {
+    const me = room.players.find(
+        player => player.name.toLowerCase() === playerName.toLowerCase()
+    );
+
+    const currentPlayer = room.players[room.currentPlayerIndex];
+
+    const isMyTurn =
+        !!me &&
+        !!currentPlayer &&
+        currentPlayer.name.toLowerCase() === playerName.toLowerCase();
+
+    const inActiveRound =
+        room.phase !== "WAITING_FOR_PLAYERS" &&
+        room.phase !== "ROUND_OVER" &&
+        room.phase !== "SHOWDOWN";
+
+    const canStartRound =
+        room.phase === "WAITING_FOR_PLAYERS" || room.phase === "ROUND_OVER";
+
+    const isHost =
+        !!room.host &&
+        room.host.toLowerCase() === playerName.toLowerCase();
+
+    const isShowdown = room.phase === "SHOWDOWN";
+
+    if (startRoundButton) {
+        startRoundButton.disabled = !canStartRound;
+    }
+
+    if (isShowdown) {
+        bet50Button && (bet50Button.disabled = true);
+        bet100Button && (bet100Button.disabled = true);
+        checkButton && (checkButton.disabled = true);
+        callButton && (callButton.disabled = true);
+        foldButton && (foldButton.disabled = true);
+        raiseButton && (raiseButton.disabled = true);
+        checkFoldButton && (checkFoldButton.disabled = true);
+
+        if (resolveShowdownButton) {
+            resolveShowdownButton.disabled = !isHost;
+        }
+
+        return;
+    }
+
+    if (resolveShowdownButton) {
+        resolveShowdownButton.disabled = true;
+    }
+
+    if (!me || !inActiveRound || me.folded || !isMyTurn) {
+        bet50Button && (bet50Button.disabled = true);
+        bet100Button && (bet100Button.disabled = true);
+        checkButton && (checkButton.disabled = true);
+        callButton && (callButton.disabled = true);
+        foldButton && (foldButton.disabled = true);
+        raiseButton && (raiseButton.disabled = true);
+        checkFoldButton && (checkFoldButton.disabled = true);
+        return;
+    }
+
+    const mustCall = me.currentRoundBet < room.currentBet;
+    const canCheck = me.currentRoundBet === room.currentBet;
+    const canBet = room.currentBet === 0;
+    const canCall = mustCall;
+    const canRaise = room.currentBet > 0;
+
+    bet50Button && (bet50Button.disabled = !canBet);
+    bet100Button && (bet100Button.disabled = !canBet);
+
+    checkButton && (checkButton.disabled = !canCheck);
+    callButton && (callButton.disabled = !canCall);
+    foldButton && (foldButton.disabled = false);
+    raiseButton && (raiseButton.disabled = !canRaise);
+    checkFoldButton && (checkFoldButton.disabled = false);
+
+    if (checkFoldButton) {
+        checkFoldButton.innerText = canCheck ? "Check / Fold" : "Check / Fold";
+    }
+}
+
+
+async function setPreCheckFold(enabled: boolean): Promise<void> {
+    const response = await fetch(`/room/${encodeURIComponent(roomCode)}/pre-check-fold`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: playerName,
+            enabled: enabled
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+}
 async function setPlayerChipsAsHost(): Promise<void> {
     if (!hostPlayerSelect || !hostChipsInput) {
         throw new Error("Host chip controls not found");
@@ -548,10 +650,8 @@ async function fold(): Promise<void> {
         throw new Error(await response.text());
     }
 }
-async function raise(): Promise<void> {
-    const raiseAmount = Number(raiseAmountInput?.value || "0");
-
-    if (!raiseAmount || raiseAmount <= 0) {
+async function raise(raiseAmount: number): Promise<void> {
+    if (raiseAmount <= 0) {
         throw new Error("Raise amount must be > 0");
     }
 
@@ -596,8 +696,11 @@ async function refreshRoom(): Promise<void> {
     renderWaitingPlayers(room.waitingPlayers ?? []);
     renderTableSeats(room);
     updateAvailableActions(room);
+    updateBetRaiseControls(room);
     renderShowdownControls(room);
+    renderPreCheckFold(room);
     renderHostChipControls(room);
+
 
     const isActivePlayer = room.players.some(
         player => player.name.toLowerCase() === playerName.toLowerCase()
@@ -708,15 +811,6 @@ foldButton?.addEventListener("click", async () => {
         setChipCount("Fold failed");
     }
 });
-raiseButton?.addEventListener("click", async () => {
-    try {
-        await raise();
-        await refreshRoom();
-    } catch (err) {
-        console.error(err);
-        setChipCount("Raise failed");
-    }
-});
 resolveShowdownButton?.addEventListener("click", async () => {
     try {
         await resolveShowdown();
@@ -742,6 +836,48 @@ setPlayerChipsButton?.addEventListener("click", async () => {
     } catch (err) {
         console.error(err);
         setChipCount("Set chips failed");
+    }
+});
+preCheckFoldButton?.addEventListener("click", async () => {
+    try {
+        const room = await getRoom();
+        const me = room.players.find(
+            player => player.name.toLowerCase() === playerName.toLowerCase()
+        );
+
+        if (!me) {
+            throw new Error("Player not found");
+        }
+
+        await setPreCheckFold(!me.preCheckFold);
+        await refreshRoom();
+    } catch (err) {
+        console.error(err);
+    }
+});
+betRaiseSlider?.addEventListener("input", async () => {
+    try {
+        const room = await getRoom();
+        updateBetRaiseControls(room);
+    } catch (err) {
+        console.error(err);
+    }
+});
+betRaiseActionButton?.addEventListener("click", async () => {
+    try {
+        const room = await getRoom();
+        const amount = getSliderAmount();
+
+        if (room.currentBet === 0) {
+            await bet(amount);
+        } else {
+            await raise(amount);
+        }
+
+        await refreshRoom();
+    } catch (err) {
+        console.error(err);
+        setChipCount("Bet / Raise failed");
     }
 });
 
