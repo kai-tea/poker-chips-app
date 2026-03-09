@@ -108,12 +108,12 @@
             <button id="decrementBetButton" class="tune-btn" type="button">–</button>
 
             <div class="slider-wrapper">
-                <input id="betRaiseSlider" type="range" min="1" max="1000" value="50" step="5">
+                <input id="betRaiseSlider" type="range" min="0" max="1000" value="50" step="5">
             </div>
 
             <button id="incrementBetButton" class="tune-btn" type="button">+</button>
 
-            <input id="betRaiseNumberInput" class="bet-amount-input" type="number" min="1" max="1000" step="5" value="50">
+            <input id="betRaiseNumberInput" class="bet-amount-input" type="number" min="0" max="1000" step="5" value="50">
             <button id="betRaiseActionButton">Bet 50</button>
         </div>
 
@@ -123,21 +123,17 @@
             <button id="resolveShowdownButton">Award Pot</button>
         </div>
 
-        <div class="bet-quick-adjusts">
-            <button id="decrease10BbButton" type="button">-{10bb}</button>
-            <button id="decrease5BbButton" type="button">-{5bb}</button>
-            <button id="decrease2BbButton" type="button">-{2bb}</button>
-            <button id="decreaseBbButton" type="button">-{bb}</button>
-            <button id="decreaseSbButton" type="button">-{sb}</button>
-
-            <button id="decreaseZeroButton" type="button">0</button>
-
-            <button id="increaseSbButton" type="button">+{sb}</button>
-            <button id="increaseBbButton" type="button">+{bb}</button>
-            <button id="increase2BbButton" type="button">+{2bb}</button>
-            <button id="increase5BbButton" type="button">+{5bb}</button>
-            <button id="increase10BbButton" type="button">+{10bb}</button>
-
+        <div class="bet-presets">
+            <button id="preset0Button" type="button">0</button>
+            <button id="preset1BbButton" type="button">0</button>
+            <button id="preset2BbButton" type="button">0</button>
+            <button id="preset5BbButton" type="button">0</button>
+            <button id="preset10BbButton" type="button">0</button>
+            <button id="preset20BbButton" type="button">0</button>
+            <button id="preset30BbButton" type="button">0</button>
+            <button id="preset40BbButton" type="button">0</button>
+            <button id="preset50BbButton" type="button">0</button>
+            <button id="preset100BbButton" type="button">0</button>
             <button id="allInButton" type="button">All-in</button>
         </div>
     </section>
@@ -170,8 +166,17 @@
         <button id="setPlayerChipsButton">Set Chips</button>
     </div>
 
+    <div id="hostKickSection" style="display: none;">
+        <h3>Kick Player</h3>
+        <select id="kickPlayerSelect"></select>
+        <button id="kickPlayerButton" type="button">Kick</button>
+    </div>
+
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="/room.js"></script>
 <script src="room.js"></script>
 </body>
 </html>

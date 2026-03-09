@@ -5,6 +5,7 @@ import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
 import com.pokerchipsapp.service.RoomService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,14 +22,14 @@ public class RoomController {
         this.roomService = roomService;
     }
 
-    private RoomSettings getDefaultSettings(){
+    private RoomSettings getDefaultSettings() {
         int bigBlind = STARTING_CHIPS / 100;
         int smallBlind = STARTING_CHIPS / 200;
         return new RoomSettings(STARTING_CHIPS, bigBlind, smallBlind);
     }
 
     @PostMapping
-    public Room createRoom(@RequestBody CreateRoomRequest body){
+    public Room createRoom(@RequestBody CreateRoomRequest body) {
         if (body == null) throw new IllegalArgumentException("Request body required");
 
         String host = body.getHost();
@@ -46,12 +47,12 @@ public class RoomController {
     }
 
     @GetMapping("/{code}/players")
-    public List<Player> getPlayers(@PathVariable String code){
+    public List<Player> getPlayers(@PathVariable String code) {
         return roomService.getPlayers(code);
     }
 
     @GetMapping("/{code}/players/{name}")
-    public Player getPlayer(@PathVariable String code, @PathVariable String name){
+    public Player getPlayer(@PathVariable String code, @PathVariable String name) {
         return roomService.getPlayer(code, name);
     }
 
@@ -61,7 +62,7 @@ public class RoomController {
     }
 
     @GetMapping("/{code}/chips/{name}")
-    public int getChips(@PathVariable String code, @PathVariable String name){
+    public int getChips(@PathVariable String code, @PathVariable String name) {
         return roomService.getPlayer(code, name).getChips();
     }
 
@@ -101,12 +102,12 @@ public class RoomController {
     }
 
     @PostMapping("/{code}/reset")
-    public void resetAllChips(@PathVariable String code){
+    public void resetAllChips(@PathVariable String code) {
         roomService.resetAllChips(code);
     }
 
     @PostMapping("/{code}/join")
-    public Room joinRoom(@RequestBody JoinRoomRequest body){
+    public Room joinRoom(@RequestBody JoinRoomRequest body) {
         return roomService.join(body.getCode(), body.getName());
     }
 
@@ -128,5 +129,14 @@ public class RoomController {
     @PostMapping("/{code}/pre-check-fold")
     public void setPreCheckFold(@PathVariable String code, @RequestBody PreCheckFoldRequest body) {
         roomService.setPreCheckFold(code, body.getName(), body.isEnabled());
+    }
+
+    @PostMapping("/{code}/kick")
+    public ResponseEntity<Void> kickPlayer(
+            @PathVariable String code,
+            @RequestBody KickPlayerRequest request
+    ) {
+        roomService.kickPlayer(code, request.hostName(), request.playerName());
+        return ResponseEntity.ok().build();
     }
 }

@@ -803,6 +803,17 @@ main input {
     pointer-events: none;
 }
 
+.bet-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.bet-presets button {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+}
 
 /* ---------- Responsive ---------- */
 

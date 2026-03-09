@@ -1,6 +1,7 @@
 package com.pokerchipsapp.service;
 
 import com.pokerchipsapp.dto.PlayerStatusResponse;
+import com.pokerchipsapp.model.GamePhase;
 import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
@@ -16,9 +17,11 @@ import static com.pokerchipsapp.model.GamePhase.*;
 public class RoomService {
     private final RoomRepository repo;
     private final Random random = new Random();
+    private final RoomBroadcastService roomBroadcastService;
 
-    public RoomService(RoomRepository repo) {
+    public RoomService(RoomRepository repo, RoomBroadcastService roomBroadcastService) {
         this.repo = repo;
+        this.roomBroadcastService = roomBroadcastService;
     }
 
     private String generateRoomCode() {
@@ -40,9 +43,17 @@ public class RoomService {
         }
     }
 
+    private Room save(Room room){
+        repo.save(room);
+        roomBroadcastService.broadcastRoom(room);
+        return room;
+    }
+
     public Room create(String host, RoomSettings settings) {
         String code = generateRoomCode();
-        return repo.save(new Room(code, host, settings));
+        Room room = repo.save(new Room(code, host, settings));
+        roomBroadcastService.broadcastRoom(room);
+        return room;
     }
     public Room get(String code){
         return repo
@@ -66,8 +77,7 @@ public class RoomService {
             }
         }
 
-        repo.save(room);
-        return room;
+        return save(room);
     }
 
     // player
@@ -85,7 +95,7 @@ public class RoomService {
         room.getPlayers().removeIf(p -> p.getName().equalsIgnoreCase(name));
         room.getWaitingPlayers().removeIf(waitingName -> waitingName.equalsIgnoreCase(name));
 
-        repo.save(room);
+        save(room);
     }
     public List<Player> getPlayers(String code){
         Room room = get(code);
@@ -109,7 +119,7 @@ public class RoomService {
         room.getPlayers().removeIf(p -> !p.getName().equalsIgnoreCase(host));
         room.getWaitingPlayers().clear();
 
-        repo.save(room);
+        save(room);
     } // deletes all players except the host
     public PlayerStatusResponse getPlayerStatus(String code, String name) {
         Room room = get(code);
@@ -138,7 +148,7 @@ public class RoomService {
 
         p.setChips(amount);
 
-        repo.save(room);
+        save(room);
     }
     public void setAllChips(String code, int chips){
         if (chips < 0) throw new IllegalArgumentException("Chips must be >= 0");
@@ -149,7 +159,7 @@ public class RoomService {
             p.setChips(chips);
         }
 
-        repo.save(room);
+        save(room);
     }
     public void resetAllChips(String code){
         int chips = get(code).getSettings().getStartingChips();
@@ -200,12 +210,12 @@ public class RoomService {
 
         if (getActivePlayers(room).size() == 1) {
             room.setPhase(ROUND_OVER);
-            repo.save(room);
+            save(room);
             return player;
         }
 
         afterAction(room);
-        repo.save(room);
+        save(room);
         return player;
     }
     public void check(String code, String name) {
@@ -223,7 +233,7 @@ public class RoomService {
 
         afterAction(room);
 
-        repo.save(room);
+        save(room);
     }
     public Player call(String code, String name) {
         Room room = get(code);
@@ -254,12 +264,12 @@ public class RoomService {
 
         if (getActivePlayers(room).size() == 1) {
             room.setPhase(ROUND_OVER);
-            repo.save(room);
+            save(room);
             return player;
         }
 
         afterAction(room);
-        repo.save(room);
+        save(room);
         return player;
     }
     public Player raise(String code, String name, int raiseAmount) {
@@ -302,12 +312,12 @@ public class RoomService {
 
         if (getActivePlayers(room).size() == 1) {
             room.setPhase(ROUND_OVER);
-            repo.save(room);
+            save(room);
             return player;
         }
 
         afterAction(room);
-        repo.save(room);
+        save(room);
         return player;
     }
     public void fold(String code, String name) {
@@ -322,12 +332,12 @@ public class RoomService {
 
         if (getActivePlayers(room).size() == 1) {
             room.setPhase(ROUND_OVER);
-            repo.save(room);
+            save(room);
             return;
         }
 
         afterAction(room);
-        repo.save(room);
+        save(room);
     }
     public void setPreCheckFold(String code, String name, boolean enabled) {
         Room room = get(code);
@@ -342,7 +352,7 @@ public class RoomService {
         }
 
         player.setPreCheckFold(enabled);
-        repo.save(room);
+        save(room);
     }
 
     // game flow
@@ -391,7 +401,7 @@ public class RoomService {
         room.setSmallBlindIndex(smallBlindIndex);
         room.setBigBlindIndex(bigBlindIndex);
 
-        repo.save(room);
+        save(room);
     }
     public void endRound(String code){
         Room room = get(code);
@@ -400,12 +410,12 @@ public class RoomService {
         resetRoundState(room);
         room.moveWaitingPlayers();
 
-        repo.save(room);
+        save(room);
     }
     public void resetRoundState(String code){
         Room room = get(code);
         resetRoundState(room);
-        repo.save(room);
+        save(room);
     }
     public void resolveShowdown(String code, String hostName, String winnerName) {
         Room room = get(code);
@@ -433,7 +443,7 @@ public class RoomService {
 
         room.moveWaitingPlayers();
 
-        repo.save(room);
+        save(room);
     }
 
 
@@ -452,7 +462,66 @@ public class RoomService {
         Player player = room.getPlayer(playerName);
         player.setChips(chips);
 
-        repo.save(room);
+        save(room);
+    }
+    public void kickPlayer(String code, String hostName, String playerNameToKick) {
+        Room room = get(code);
+
+        if (!room.getHost().equalsIgnoreCase(hostName)) {
+            throw new IllegalStateException("Only the host can kick players");
+        }
+
+        if (room.getHost().equalsIgnoreCase(playerNameToKick)) {
+            throw new IllegalStateException("Host cannot kick themselves");
+        }
+
+        List<Player> players = room.getPlayers();
+        List<String> waitingPlayers = room.getWaitingPlayers();
+
+        int activeIndex = -1;
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).getName().equalsIgnoreCase(playerNameToKick)) {
+                activeIndex = i;
+                break;
+            }
+        }
+
+        if (activeIndex >= 0) {
+            players.remove(activeIndex);
+
+            for (int i = 0; i < players.size(); i++) {
+                players.get(i).setSeatIndex(i);
+            }
+
+            if (players.isEmpty()) {
+                room.setCurrentPlayerIndex(0);
+                room.setDealerIndex(0);
+                room.setPhase(GamePhase.valueOf("WAITING_FOR_PLAYERS"));
+            } else {
+                if (room.getCurrentPlayerIndex() > activeIndex) {
+                    room.setCurrentPlayerIndex(room.getCurrentPlayerIndex() - 1);
+                } else if (room.getCurrentPlayerIndex() == activeIndex) {
+                    room.setCurrentPlayerIndex(room.getCurrentPlayerIndex() % players.size());
+                }
+
+                if (room.getDealerIndex() > activeIndex) {
+                    room.setDealerIndex(room.getDealerIndex() - 1);
+                } else if (room.getDealerIndex() == activeIndex) {
+                    room.setDealerIndex(room.getDealerIndex() % players.size());
+                }
+            }
+
+            save(room);
+            return;
+        }
+
+        boolean removedWaiting = waitingPlayers.removeIf(name -> name.equalsIgnoreCase(playerNameToKick));
+
+        if (!removedWaiting) {
+            throw new IllegalArgumentException("Player not found in room");
+        }
+
+        save(room);
     }
 
 
@@ -570,7 +639,6 @@ public class RoomService {
             throw new IllegalStateException("No active round");
         }
     }
-
     private void applyQueuedActionIfNeeded(Room room) {
         Player currentPlayer = room.getPlayers().get(room.getCurrentPlayerIndex());
 
@@ -601,7 +669,6 @@ public class RoomService {
             applyQueuedActionIfNeeded(room);
         }
     }
-
     private void pauseForActionVisibility() {
         try {
             Thread.sleep(1200);
@@ -609,7 +676,6 @@ public class RoomService {
             Thread.currentThread().interrupt();
         }
     }
-
     private int getNextActivePlayerIndex(Room room, int startIndex) {
         List<Player> players = room.getPlayers();
         int size = players.size();
@@ -625,7 +691,6 @@ public class RoomService {
 
         throw new IllegalStateException("No active player found");
     }
-
     private int postBlind(Room room, int playerIndex, int blindAmount, String actionName) {
         Player player = room.getPlayers().get(playerIndex);
         int posted = Math.min(player.getChips(), blindAmount);
