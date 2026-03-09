@@ -51,9 +51,24 @@ public class RoomService {
 
     public Room create(String host, RoomSettings settings) {
         String code = generateRoomCode();
-        Room room = repo.save(new Room(code, host, settings));
-        roomBroadcastService.broadcastRoom(room);
-        return room;
+
+        try {
+            System.out.println("Creating room...");
+            System.out.println("host = " + host);
+            System.out.println("startingChips = " + settings.getStartingChips());
+            System.out.println("bigBlind = " + settings.getBigBlind());
+            System.out.println("smallBlind = " + settings.getSmallBlind());
+
+            Room room = new Room(code, host, settings);
+            Room saved = repo.save(room);
+
+            System.out.println("Room saved successfully with code = " + saved.getCode());
+
+            return saved;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
     public Room get(String code){
         return repo
