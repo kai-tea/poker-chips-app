@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poker Room</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <main class="room-page">
@@ -46,6 +46,26 @@
                         <div class="community-card hidden-card"></div>
                     </div>
                 </div>
+                <div id="bet0" class="table-bet"></div>
+                <div id="bet1" class="table-bet"></div>
+                <div id="bet2" class="table-bet"></div>
+                <div id="bet3" class="table-bet"></div>
+                <div id="bet4" class="table-bet"></div>
+                <div id="bet5" class="table-bet"></div>
+                <div id="bet6" class="table-bet"></div>
+                <div id="bet7" class="table-bet"></div>
+                <div id="bet8" class="table-bet"></div>
+                <div id="bet9" class="table-bet"></div>
+                <div id="check0" class="table-check"></div>
+                <div id="check1" class="table-check"></div>
+                <div id="check2" class="table-check"></div>
+                <div id="check3" class="table-check"></div>
+                <div id="check4" class="table-check"></div>
+                <div id="check5" class="table-check"></div>
+                <div id="check6" class="table-check"></div>
+                <div id="check7" class="table-check"></div>
+                <div id="check8" class="table-check"></div>
+                <div id="check9" class="table-check"></div>
             </div>
 
             <div class="seat seat-0"><div id="seat0" class="seat-label">Seat 1</div></div>
@@ -88,19 +108,12 @@
             <button id="decrementBetButton" class="tune-btn" type="button">–</button>
 
             <div class="slider-wrapper">
-                <input
-                        id="betRaiseSlider"
-                        type="range"
-                        min="1"
-                        max="1000"
-                        value="50"
-                        step="5"
-                >
+                <input id="betRaiseSlider" type="range" min="1" max="1000" value="50" step="5">
             </div>
 
             <button id="incrementBetButton" class="tune-btn" type="button">+</button>
 
-            <span id="betRaiseValue" class="bet-amount-value">50</span>
+            <input id="betRaiseNumberInput" class="bet-amount-input" type="number" min="1" max="1000" step="5" value="50">
             <button id="betRaiseActionButton">Bet 50</button>
         </div>
 
@@ -108,6 +121,24 @@
             <label for="winnerSelect">Winner</label>
             <select id="winnerSelect"></select>
             <button id="resolveShowdownButton">Award Pot</button>
+        </div>
+
+        <div class="bet-quick-adjusts">
+            <button id="decrease10BbButton" type="button">-{10bb}</button>
+            <button id="decrease5BbButton" type="button">-{5bb}</button>
+            <button id="decrease2BbButton" type="button">-{2bb}</button>
+            <button id="decreaseBbButton" type="button">-{bb}</button>
+            <button id="decreaseSbButton" type="button">-{sb}</button>
+
+            <button id="decreaseZeroButton" type="button">0</button>
+
+            <button id="increaseSbButton" type="button">+{sb}</button>
+            <button id="increaseBbButton" type="button">+{bb}</button>
+            <button id="increase2BbButton" type="button">+{2bb}</button>
+            <button id="increase5BbButton" type="button">+{5bb}</button>
+            <button id="increase10BbButton" type="button">+{10bb}</button>
+
+            <button id="allInButton" type="button">All-in</button>
         </div>
     </section>
 
