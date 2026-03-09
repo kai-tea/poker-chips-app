@@ -89,11 +89,30 @@ public class RoomService {
         }
         return false;
     }
-    public void deletePlayer(String code, String name){
+    public void deletePlayer(String code, String name) {
         Room room = get(code);
 
         room.getPlayers().removeIf(p -> p.getName().equalsIgnoreCase(name));
         room.getWaitingPlayers().removeIf(waitingName -> waitingName.equalsIgnoreCase(name));
+
+        for (int i = 0; i < room.getPlayers().size(); i++) {
+            room.getPlayers().get(i).setSeatIndex(i);
+        }
+
+        reassignHostIfNeeded(room, name);
+
+        if (room.getPlayers().isEmpty()) {
+            room.setCurrentPlayerIndex(0);
+            room.setDealerIndex(0);
+            room.setPhase(WAITING_FOR_PLAYERS);
+        } else {
+            if (room.getCurrentPlayerIndex() >= room.getPlayers().size()) {
+                room.setCurrentPlayerIndex(0);
+            }
+            if (room.getDealerIndex() >= room.getPlayers().size()) {
+                room.setDealerIndex(0);
+            }
+        }
 
         save(room);
     }
@@ -493,10 +512,12 @@ public class RoomService {
                 players.get(i).setSeatIndex(i);
             }
 
+            reassignHostIfNeeded(room, playerNameToKick);
+
             if (players.isEmpty()) {
                 room.setCurrentPlayerIndex(0);
                 room.setDealerIndex(0);
-                room.setPhase(GamePhase.valueOf("WAITING_FOR_PLAYERS"));
+                room.setPhase(WAITING_FOR_PLAYERS);
             } else {
                 if (room.getCurrentPlayerIndex() > activeIndex) {
                     room.setCurrentPlayerIndex(room.getCurrentPlayerIndex() - 1);
@@ -521,6 +542,7 @@ public class RoomService {
             throw new IllegalArgumentException("Player not found in room");
         }
 
+        reassignHostIfNeeded(room, playerNameToKick);
         save(room);
     }
 
@@ -702,5 +724,19 @@ public class RoomService {
         room.setPot(room.getPot() + posted);
 
         return posted;
+    }
+    private void reassignHostIfNeeded(Room room, String removedPlayerName) {
+        if (!room.getHost().equalsIgnoreCase(removedPlayerName)) {
+            return;
+        }
+
+        if (!room.getPlayers().isEmpty()) {
+            room.setHost(room.getPlayers().get(0).getName());
+            return;
+        }
+
+        if (!room.getWaitingPlayers().isEmpty()) {
+            room.setHost(room.getWaitingPlayers().get(0));
+        }
     }
 }

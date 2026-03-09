@@ -1,6 +1,6 @@
 function loadRoomContext(): { roomCode: string; playerName: string } | null {
-    const roomCode = sessionStorage.getItem("roomCode");
-    const playerName = sessionStorage.getItem("playerName");
+    const roomCode = localStorage.getItem("roomCode");
+    const playerName = localStorage.getItem("playerName");
 
     if (!roomCode || !playerName) return null;
 

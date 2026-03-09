@@ -19,8 +19,8 @@ function setStatus(message: string): void {
 }
 
 function saveRoomContext(roomCode: string, playerName: string): void {
-    sessionStorage.setItem("roomCode", roomCode);
-    sessionStorage.setItem("playerName", playerName);
+    localStorage.setItem("roomCode", roomCode);
+    localStorage.setItem("playerName", playerName);
 }
 
 function goToRoom(roomCode: string, playerName: string): void {
