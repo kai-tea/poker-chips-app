@@ -1,19 +1,15 @@
-# InelliJ IDE files
-.idea
+# IntelliJ
+.idea/
 *.iml
 
-target
+# Build output
+target/
 
 # Mac OS
 .DS_Store
 
-# static
-*.js
+# Node
 node_modules/
 node/
 
-# maven
-mvnw
-mvnw.cmd
-.mvn/
-
+# *.js
