@@ -205,7 +205,7 @@ function renderPlayers(players: Player[], currentPlayerIndex?: number): void {
 
         const chipsSpan = document.createElement("span");
         chipsSpan.className = "player-chips";
-        chipsSpan.innerText = `${player.chips} chips`;
+        chipsSpan.innerText = `${player.chips}`;
 
         const betSpan = document.createElement("span");
         betSpan.className = "player-bet";
@@ -372,7 +372,7 @@ function renderTableSeats(room: Room): void {
 
         const chipsDiv = document.createElement("div");
         chipsDiv.className = "seat-player-chips";
-        chipsDiv.innerText = `${player.chips} chips`;
+        chipsDiv.innerText = `${player.chips}`;
 
         seatEl.innerHTML = "";
         seatEl.appendChild(nameDiv);
