@@ -383,12 +383,11 @@ main input {
     inset: 50% auto auto 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    width: 100%;
-    max-width: 520px;
+    width: min(70%, 520px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 4;
+    z-index: 2;
 }
 
 .table-label {
@@ -517,22 +516,29 @@ main input {
 
 /* ---------- Poker cards ---------- */
 
+/* ---------- Poker cards ---------- */
+
 .community-cards {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    margin-top: 18px;
+    gap: clamp(4px, 1vw, 10px);
+    margin-top: clamp(10px, 2vw, 18px);
     flex-wrap: nowrap;
     width: 100%;
 }
 
 .community-card {
-    flex: 0 0 auto;
-    width: 56px;
-    height: 80px;
-    border-radius: 12px;
+    position: relative;
+    z-index: 2;
+    flex: 0 1 auto;
+    width: clamp(32px, 8vw, 56px);
+    aspect-ratio: 7 / 10;
+    height: auto;
+    border-radius: clamp(8px, 1.5vw, 12px);
     background:
             radial-gradient(circle at 20% 18%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 22%, transparent 22%),
             linear-gradient(180deg, #ffffff 0%, #f3f4f8 100%);
@@ -541,12 +547,11 @@ main input {
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: clamp(0.7rem, 1.8vw, 1.05rem);
     box-shadow:
             0 4px 10px rgb(0, 0, 0),
             inset 0 0 0 2px rgba(255,255,255,0.65);
-    border: 2px solid #2b3142;
-    position: relative;
+    border: clamp(1px, 0.35vw, 2px) solid #2b3142;
     overflow: hidden;
     transform-style: preserve-3d;
     backface-visibility: hidden;
@@ -556,9 +561,9 @@ main input {
 .community-card::before {
     content: "";
     position: absolute;
-    inset: 5px;
-    border-radius: 8px;
-    border: 2px solid rgba(43, 49, 66, 0.75);
+    inset: clamp(3px, 0.8vw, 5px);
+    border-radius: clamp(5px, 1vw, 8px);
+    border: clamp(1px, 0.35vw, 2px) solid rgba(43, 49, 66, 0.75);
     background:
             repeating-linear-gradient(
                     45deg,
@@ -590,7 +595,7 @@ main input {
                     #a32638 8px,
                     #a32638 16px
             );
-    border: 2px solid #d7dce8;
+    border: clamp(1px, 0.35vw, 2px) solid #d7dce8;
     box-shadow:
             0 4px 10px rgb(0, 0, 0),
             inset 0 0 0 2px rgba(255,255,255,0.28);
@@ -599,9 +604,9 @@ main input {
 .hidden-card::before {
     content: "";
     position: absolute;
-    inset: 8px;
-    border-radius: 8px;
-    border: 2px solid rgba(255,255,255,0.72);
+    inset: clamp(5px, 1.2vw, 8px);
+    border-radius: clamp(5px, 1vw, 8px);
+    border: clamp(1px, 0.35vw, 2px) solid rgba(255,255,255,0.72);
     background:
             repeating-linear-gradient(
                     -45deg,
@@ -736,7 +741,7 @@ main input {
     width: 90px;
     min-width: 90px;
     text-align: center;
-    fot-weight: 700;
+    font-weight: 700;
 }
 
 .tune-btn {
@@ -780,7 +785,7 @@ main input {
     box-shadow:
             0 6px 14px rgba(0,0,0,0.28),
             inset 0 1px 0 rgba(255,255,255,0.05);
-    z-index: 3;
+    z-index: 5;
     pointer-events: none;
 }
 
@@ -799,7 +804,7 @@ main input {
     box-shadow:
             0 6px 14px rgba(0,0,0,0.28),
             inset 0 1px 0 rgba(255,255,255,0.05);
-    z-index: 3;
+    z-index: 5;
     pointer-events: none;
 }
 
