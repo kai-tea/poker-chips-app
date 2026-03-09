@@ -1,23 +1,18 @@
 package com.pokerchipsapp.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.Objects;
-
 public class Player {
     private String name;
     private int chips;
     private boolean preCheckFold = false;
     private String lastAction;
 
-    // game flow
     private int seatIndex;
     private boolean folded = false;
     private boolean actedThisRound = false;
     private int currentRoundBet = 0;
 
-    public Player() {}
+    public Player() {
+    }
 
     public Player(String name, int chips, int seatIndex) {
         this.name = name;
@@ -25,23 +20,50 @@ public class Player {
         this.seatIndex = seatIndex;
     }
 
-    public String getLastAction() {
-        return lastAction;
+    public String getName() {
+        return name;
     }
-    public void setLastAction(String lastAction) {
-        this.lastAction = lastAction;
+
+    public int getChips() {
+        return chips;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setChips(int chips) {
+        this.chips = chips;
     }
 
     public boolean isPreCheckFold() {
         return preCheckFold;
     }
+
     public void setPreCheckFold(boolean preCheckFold) {
         this.preCheckFold = preCheckFold;
+    }
+
+    public String getLastAction() {
+        return lastAction;
+    }
+
+    public void setLastAction(String lastAction) {
+        this.lastAction = lastAction;
+    }
+
+    public int getSeatIndex() {
+        return seatIndex;
+    }
+
+    public void setSeatIndex(int seatIndex) {
+        this.seatIndex = seatIndex;
     }
 
     public boolean isFolded() {
         return folded;
     }
+
     public void setFolded(boolean folded) {
         this.folded = folded;
     }
@@ -49,6 +71,7 @@ public class Player {
     public boolean isActedThisRound() {
         return actedThisRound;
     }
+
     public void setActedThisRound(boolean actedThisRound) {
         this.actedThisRound = actedThisRound;
     }
@@ -56,20 +79,8 @@ public class Player {
     public int getCurrentRoundBet() {
         return currentRoundBet;
     }
+
     public void setCurrentRoundBet(int currentRoundBet) {
         this.currentRoundBet = currentRoundBet;
     }
-
-    public int getSeatIndex() {
-        return seatIndex;
-    }
-    public void setSeatIndex(int seatIndex) {
-        this.seatIndex = seatIndex;
-    }
-
-    public String getName() { return name; }
-    public int getChips() { return chips; }
-
-    public void setName(String name) { this.name = name; }
-    public void setChips(int chips) { this.chips = chips; }
 }
