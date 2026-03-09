@@ -1061,8 +1061,46 @@ async function checkFold(): Promise<void> {
     }
 }
 async function refreshRoom(): Promise<void> {
-    const room = await getRoom();
-    renderRoom(room);
+    try {
+        const room = await getRoom();
+
+        const me = room.players.find(
+            player => player.name.toLowerCase() === playerName.toLowerCase()
+        );
+
+        const sliderMaxForLabels = me
+            ? Math.max(0, Math.min(me.chips, room.settings.bigBlind * 100))
+            : room.settings.bigBlind * 100;
+
+        updatePresetLabels(room.settings.bigBlind, sliderMaxForLabels);
+
+        renderGameState(room);
+        renderPlayers(room.players, room.currentPlayerIndex);
+        renderWaitingPlayers(room.waitingPlayers ?? []);
+        renderTableSeats(room);
+        updateAvailableActions(room);
+        updateBetRaiseControls(room);
+        renderShowdownControls(room);
+        renderPreCheckFold(room);
+        renderHostChipControls(room);
+
+        const isActivePlayer = room.players.some(
+            player => player.name.toLowerCase() === playerName.toLowerCase()
+        );
+        const isWaitingPlayer = (room.waitingPlayers ?? []).some(
+            name => name.toLowerCase() === playerName.toLowerCase()
+        );
+
+        if (isActivePlayer) {
+            await getChipCount();
+        } else if (isWaitingPlayer) {
+            setChipCount("You are waiting for the next round");
+        } else {
+            setChipCount("You are not seated in this room");
+        }
+    } catch (err) {
+        console.error("refreshRoom failed", err);
+    }
 }
 async function resolveShowdown(): Promise<void> {
     if (!winnerSelect) {
@@ -1358,4 +1396,17 @@ function connectRoomSocket(): void {
 }
 
 connectRoomSocket();
+getRoom()
+    .then(room => {
+        const me = room.players.find(
+            player => player.name.toLowerCase() === playerName.toLowerCase()
+        );
+
+        const sliderMaxForLabels = me
+            ? Math.max(0, Math.min(me.chips, room.settings.bigBlind * 100))
+            : room.settings.bigBlind * 100;
+
+        updatePresetLabels(room.settings.bigBlind, sliderMaxForLabels);
+    })
+    .catch(console.error);
 void refreshRoom();
