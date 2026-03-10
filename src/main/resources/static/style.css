@@ -914,6 +914,19 @@ main input {
         gap: 10px;
     }
 
+    .table-controls-overlay.mobile-actions-fixed {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        padding: 10px 14px 12px;
+        background: rgba(12, 18, 28, 0.95);
+        border-top: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 -10px 24px rgba(0,0,0,0.35);
+        z-index: 20;
+    }
+
     .table-controls-left {
         flex: 0 0 54%;
         max-width: 54%;

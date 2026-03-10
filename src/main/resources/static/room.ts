@@ -84,6 +84,7 @@ const hostSeatingSection = document.getElementById("hostSeatingSection");
 const hostSeatingList = document.getElementById("hostSeatingList");
 const saveSeatingButton = document.getElementById("saveSeatingButton") as HTMLButtonElement | null;
 const seatingEditHint = document.getElementById("seatingEditHint");
+const tableControlsOverlay = document.querySelector(".table-controls-overlay") as HTMLElement | null;
 
 let draggingPlayerName: string | null = null;
 
@@ -916,6 +917,7 @@ function renderRoom(room: Room): void {
     renderHostChipControls(room);
     renderHostKickControls(room);
     renderHostSeatingControls(room);
+    updateMobileActionBarMode();
 }
 
 async function setPreCheckFold(enabled: boolean): Promise<void> {
@@ -1119,6 +1121,7 @@ async function refreshRoom(): Promise<void> {
         renderPreCheckFold(room);
         renderHostChipControls(room);
         renderHostSeatingControls(room);
+        updateMobileActionBarMode();
     } catch (err) {
         console.error("refreshRoom failed", err);
     }
@@ -1405,3 +1408,46 @@ function connectRoomSocket(): void {
 
 connectRoomSocket();
 void refreshRoom();
+
+function getMobileReleaseTarget(): HTMLElement | null {
+    const candidates = [hostChipsSection, hostKickSection, hostSeatingSection];
+    for (const el of candidates) {
+        if (!el) continue;
+        const style = window.getComputedStyle(el);
+        if (style.display !== "none") return el;
+    }
+    return document.querySelector(".content-grid") as HTMLElement | null;
+}
+
+function updateMobileActionBarMode(): void {
+    if (!tableControlsOverlay) return;
+
+    const isMobile = window.innerWidth <= 800;
+    if (!isMobile) {
+        tableControlsOverlay.classList.remove("mobile-actions-fixed");
+        document.body.style.paddingBottom = "";
+        return;
+    }
+
+    const releaseTarget = getMobileReleaseTarget();
+    let shouldFix = true;
+
+    if (releaseTarget) {
+        const targetTop = releaseTarget.getBoundingClientRect().top;
+        shouldFix = targetTop > window.innerHeight * 0.85;
+    }
+
+    tableControlsOverlay.classList.toggle("mobile-actions-fixed", shouldFix);
+
+    if (shouldFix) {
+        const height = tableControlsOverlay.getBoundingClientRect().height;
+        document.body.style.paddingBottom = `${Math.ceil(height + 12)}px`;
+    } else {
+        document.body.style.paddingBottom = "";
+    }
+}
+
+window.addEventListener("scroll", () => {
+    updateMobileActionBarMode();
+}, { passive: true });
+window.addEventListener("resize", updateMobileActionBarMode);
