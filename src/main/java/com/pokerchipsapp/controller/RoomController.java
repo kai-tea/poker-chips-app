@@ -102,8 +102,8 @@ public class RoomController {
     }
 
     @PostMapping("/{code}/reset")
-    public void resetAllChips(@PathVariable String code) {
-        roomService.resetAllChips(code);
+    public void resetAllChips(@PathVariable String code, @RequestBody ResetChipsRequest body) {
+        roomService.resetAllChips(code, body.getHostName());
     }
 
     @PostMapping("/{code}/join")

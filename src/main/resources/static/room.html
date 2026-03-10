@@ -15,23 +15,6 @@
         </div>
     </header>
 
-    <section class="stats-grid">
-        <article class="card">
-            <h2 class="card-title">Game State</h2>
-            <div id="gameState" class="stats-list">
-                <p id="phaseText">Phase: -</p>
-                <p id="potText">Pot: -</p>
-                <p id="currentBetText">Current Bet: -</p>
-                <p id="currentPlayerText">Current Player: -</p>
-            </div>
-        </article>
-
-        <article class="card">
-            <h2 class="card-title">Your Stack</h2>
-            <div id="chipCount" class="chip-count">Loading chips...</div>
-        </article>
-    </section>
-
     <section class="table-card">
         <div class="poker-table">
             <div class="table-surface">
@@ -86,33 +69,30 @@
             <h2 class="card-title">Actions</h2>
         </div>
 
-        <div class="action-row">
-            <button id="startRoundButton">Start Round</button>
-            <button id="resetChipsButton">Reset Chips</button>
-        </div>
+        <div class="action-row action-row-main">
+            <div class="bet-form-controls bet-controls-inline">
+                <button id="decrementBetButton" class="tune-btn" type="button">–</button>
 
-        <div class="action-row">
-            <button id="preCheckFoldButton" type="button">Check/Fold</button>
-            <!--
-            <button id="checkFoldButton">Check / Fold</button>
-            -->
-            <button id="checkButton">Check</button>
-            <button id="callButton">Call</button>
-            <button id="foldButton">Fold</button>
+                <div class="slider-wrapper">
+                    <input id="betRaiseSlider" type="range" min="0" max="1000" value="50" step="5">
+                </div>
 
-        </div>
+                <button id="incrementBetButton" class="tune-btn" type="button">+</button>
 
-        <div class="bet-form-controls">
-            <button id="decrementBetButton" class="tune-btn" type="button">–</button>
-
-            <div class="slider-wrapper">
-                <input id="betRaiseSlider" type="range" min="0" max="1000" value="50" step="5">
+                <input id="betRaiseNumberInput" class="bet-amount-input" type="number" min="0" max="1000" step="5" value="50">
+                <button id="betRaiseActionButton">Bet</button>
             </div>
 
-            <button id="incrementBetButton" class="tune-btn" type="button">+</button>
-
-            <input id="betRaiseNumberInput" class="bet-amount-input" type="number" min="0" max="1000" step="5" value="50">
-            <button id="betRaiseActionButton">Bet 50</button>
+            <div class="action-buttons-inline">
+                <button id="startRoundButton">Start Round</button>
+                <button id="preCheckFoldButton" type="button">Pre Fold</button>
+                <!--
+                <button id="checkFoldButton">Check / Fold</button>
+                -->
+                <button id="checkButton">Check</button>
+                <button id="callButton">Call</button>
+                <button id="foldButton">Fold</button>
+            </div>
         </div>
 
         <div id="showdownSection" style="display: none;">
@@ -121,19 +101,6 @@
             <button id="resolveShowdownButton">Award Pot</button>
         </div>
 
-        <div class="bet-presets">
-            <button id="preset0Button" type="button">0</button>
-            <button id="preset1BbButton" type="button">0</button>
-            <button id="preset2BbButton" type="button">0</button>
-            <button id="preset5BbButton" type="button">0</button>
-            <button id="preset10BbButton" type="button">0</button>
-            <button id="preset20BbButton" type="button">0</button>
-            <button id="preset30BbButton" type="button">0</button>
-            <button id="preset40BbButton" type="button">0</button>
-            <button id="preset50BbButton" type="button">0</button>
-            <button id="preset100BbButton" type="button">0</button>
-            <button id="allInButton" type="button">All-in</button>
-        </div>
     </section>
 
     <section class="content-grid">
@@ -162,6 +129,7 @@
         <input id="hostChipsInput" type="number" min="0" placeholder="Chips">
 
         <button id="setPlayerChipsButton">Set Chips</button>
+        <button id="resetChipsButton">Reset Chips</button>
     </div>
 
     <div id="hostKickSection" style="display: none;">
@@ -175,6 +143,5 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script src="/room.js"></script>
-<script src="room.js"></script>
 </body>
 </html>

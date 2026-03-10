@@ -14,8 +14,8 @@ function setStatus(message) {
     }
 }
 function saveRoomContext(roomCode, playerName) {
-    sessionStorage.setItem("roomCode", roomCode);
-    sessionStorage.setItem("playerName", playerName);
+    localStorage.setItem("roomCode", roomCode);
+    localStorage.setItem("playerName", playerName);
 }
 function goToRoom(roomCode, playerName) {
     saveRoomContext(roomCode, playerName);

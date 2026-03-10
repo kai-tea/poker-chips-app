@@ -8,6 +8,8 @@ import com.pokerchipsapp.model.RoomSettings;
 import com.pokerchipsapp.repo.RoomRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 
@@ -45,6 +47,7 @@ public class RoomService {
 
     private Room save(Room room){
         repo.save(room);
+        room.setLastActivityAt(Instant.now());
         roomBroadcastService.broadcastRoom(room);
         return room;
     }
@@ -129,6 +132,12 @@ public class RoomService {
             }
         }
 
+        // delete room if no players are left
+        if (room.getPlayers().isEmpty() && room.getWaitingPlayers().isEmpty()) {
+            repo.delete(room);
+            return;
+        }
+
         save(room);
     }
     public List<Player> getPlayers(String code){
@@ -195,9 +204,44 @@ public class RoomService {
 
         save(room);
     }
-    public void resetAllChips(String code){
-        int chips = get(code).getSettings().getStartingChips();
-        setAllChips(code, chips);
+    public void resetAllChips(String code, String hostName){
+        if (hostName == null || hostName.isBlank()) {
+            throw new IllegalArgumentException("hostName required");
+        }
+
+        Room room = get(code);
+
+        if (!room.getHost().equalsIgnoreCase(hostName)) {
+            throw new IllegalStateException("Only the host can reset chips");
+        }
+
+        int chips = room.getSettings().getStartingChips();
+
+        for (Player player : getActivePlayers(room)) {
+            player.setChips(chips);
+        }
+
+        save(room);
+    }
+    private int getMaxMatchableRoundBet(Room room, String actingPlayerName) {
+        int maxMatchable = -1;
+
+        for (Player p : room.getPlayers()) {
+            if (p.getName().equalsIgnoreCase(actingPlayerName)) {
+                continue;
+            }
+
+            if (p.isFolded()) {
+                continue;
+            }
+
+            int reachableTotal = p.getCurrentRoundBet() + p.getChips();
+            if (reachableTotal > maxMatchable) {
+                maxMatchable = reachableTotal;
+            }
+        }
+
+        return maxMatchable;
     }
 
     // player actions
@@ -223,6 +267,11 @@ public class RoomService {
             );
         }
 
+        int maxMatchableRoundBet = getMaxMatchableRoundBet(room, player.getName());
+        if (maxMatchableRoundBet >= 0 && newRoundBet > maxMatchableRoundBet) {
+            throw new IllegalArgumentException("Bet exceeds the effective stack of remaining opponents");
+        }
+
         player.setChips(player.getChips() - amount);
         player.setCurrentRoundBet(newRoundBet);
         player.setActedThisRound(true);
@@ -243,7 +292,7 @@ public class RoomService {
         room.setPot(room.getPot() + amount);
 
         if (getActivePlayers(room).size() == 1) {
-            room.setPhase(ROUND_OVER);
+            awardPotToLastActivePlayer(room);
             save(room);
             return player;
         }
@@ -297,7 +346,7 @@ public class RoomService {
         room.setPot(room.getPot() + amountToCall);
 
         if (getActivePlayers(room).size() == 1) {
-            room.setPhase(ROUND_OVER);
+            awardPotToLastActivePlayer(room);
             save(room);
             return player;
         }
@@ -328,8 +377,14 @@ public class RoomService {
             throw new IllegalArgumentException("Not enough chips");
         }
 
+        int newRoundBet = player.getCurrentRoundBet() + totalAmount;
+        int maxMatchableRoundBet = getMaxMatchableRoundBet(room, player.getName());
+        if (maxMatchableRoundBet >= 0 && newRoundBet > maxMatchableRoundBet) {
+            throw new IllegalArgumentException("Raise exceeds the effective stack of remaining opponents");
+        }
+
         player.setChips(player.getChips() - totalAmount);
-        player.setCurrentRoundBet(player.getCurrentRoundBet() + totalAmount);
+        player.setCurrentRoundBet(newRoundBet);
         player.setActedThisRound(true);
         player.setLastAction("RAISE");
 
@@ -345,7 +400,7 @@ public class RoomService {
         player.setActedThisRound(true);
 
         if (getActivePlayers(room).size() == 1) {
-            room.setPhase(ROUND_OVER);
+            awardPotToLastActivePlayer(room);
             save(room);
             return player;
         }
@@ -365,7 +420,7 @@ public class RoomService {
         player.setLastAction("FOLD");
 
         if (getActivePlayers(room).size() == 1) {
-            room.setPhase(ROUND_OVER);
+            awardPotToLastActivePlayer(room);
             save(room);
             return;
         }
@@ -557,6 +612,11 @@ public class RoomService {
             throw new IllegalArgumentException("Player not found in room");
         }
 
+        if (room.getPlayers().isEmpty() && room.getWaitingPlayers().isEmpty()) {
+            repo.delete(room);
+            return;
+        }
+
         reassignHostIfNeeded(room, playerNameToKick);
         save(room);
     }
@@ -695,7 +755,7 @@ public class RoomService {
         }
 
         if (getActivePlayers(room).size() == 1) {
-            room.setPhase(ROUND_OVER);
+            awardPotToLastActivePlayer(room);
             return;
         }
 
@@ -753,5 +813,28 @@ public class RoomService {
         if (!room.getWaitingPlayers().isEmpty()) {
             room.setHost(room.getWaitingPlayers().get(0));
         }
+    }
+    private void awardPotToLastActivePlayer(Room room) {
+        List<Player> activePlayers = getActivePlayers(room);
+
+        if (activePlayers.size() != 1) {
+            throw new IllegalStateException("Cannot award pot without exactly one active player");
+        }
+
+        Player winner = activePlayers.get(0);
+        winner.setChips(winner.getChips() + room.getPot());
+        winner.setLastAction("WIN");
+
+        room.setPot(0);
+        room.setCurrentBet(0);
+        room.setPhase(ROUND_OVER);
+
+        for (Player p : room.getPlayers()) {
+            p.setCurrentRoundBet(0);
+            p.setActedThisRound(false);
+            p.setPreCheckFold(false);
+        }
+
+        room.moveWaitingPlayers();
     }
 }

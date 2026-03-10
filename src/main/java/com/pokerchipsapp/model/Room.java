@@ -3,6 +3,7 @@ package com.pokerchipsapp.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class Room {
     private List<Player> players = new ArrayList<>();
     private List<String> waitingPlayers = new ArrayList<>();
     private RoomSettings settings;
+    private Instant lastActivityAt;
 
     private GamePhase phase = GamePhase.WAITING_FOR_PLAYERS;
     private int dealerIndex = 0;
@@ -43,6 +45,14 @@ public class Room {
         this.bigBlindIndex = -1;
 
         this.players.add(new Player(host, settings.getStartingChips(), 0));
+    }
+
+    public Instant getLastActivityAt() {
+        return lastActivityAt;
+    }
+
+    public void setLastActivityAt(Instant lastActivityAt) {
+        this.lastActivityAt = lastActivityAt;
     }
 
     public void addPlayer(String name) {

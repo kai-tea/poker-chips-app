@@ -186,30 +186,14 @@ main input {
     font-size: 1rem;
 }
 
-.stats-grid,
 .content-grid {
     display: grid;
     gap: 16px;
     margin-bottom: 16px;
 }
 
-.stats-grid {
-    grid-template-columns: 2fr 1fr;
-}
-
 .content-grid {
     grid-template-columns: 2fr 1fr;
-}
-
-.stats-list p,
-.chip-count {
-    margin: 10px 0;
-    color: var(--text);
-}
-
-.chip-count {
-    font-size: 1.15rem;
-    font-weight: 700;
 }
 
 .player-list {
@@ -233,8 +217,13 @@ main input {
 .action-row {
     display: flex;
     gap: 10px;
-    flex-wrap: wrap;
+    align-items: center;
     margin-top: 12px;
+}
+.action-row-main {
+    flex-wrap: nowrap;
+    width: 100%;
+    justify-content: space-between;
 }
 
 #startRoundButton {
@@ -295,12 +284,6 @@ main input {
     background: rgba(255,255,255,0.08);
     color: var(--muted);
     font-size: 0.8rem;
-}
-
-.turn-status {
-    background: rgba(94, 234, 212, 0.18);
-    color: var(--accent);
-    font-weight: 700;
 }
 
 /* ---------- 3D Poker table ---------- */
@@ -463,16 +446,11 @@ main input {
     line-height: 1;
 }
 
-.seat-player-status.turn-status {
-    background: rgba(94, 234, 212, 0.18);
-    color: var(--accent);
-    font-weight: 700;
-}
-
 .seat-active {
     background: linear-gradient(180deg, rgba(18, 24, 34, 0.82) 0%, rgba(10, 14, 22, 0.66) 100%);
-    border: 1px solid rgba(17, 220, 172, 0.53);
+    border: 2px solid rgba(17, 220, 172, 0.65);
     color: rgba(255,255,255,1);
+    box-shadow: 0 0 10px rgba(17, 220, 172, 0.22);
 }
 
 .seat-inactive {
@@ -661,15 +639,28 @@ main input {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-wrap: wrap;
+    margin-top: 0;
+    flex: 0 0 520px;
+    min-width: 0;
+    max-width: 620px;
+    flex-wrap: nowrap;
 }
 
 .slider-wrapper {
     display: flex;
     align-items: center;
-    min-width: 240px;
-    flex: 1 1 260px;
+    min-width: 0;
+    flex: 1 1 auto;
     height: 20px;
+}
+
+.action-buttons-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    min-width: 0;
 }
 
 #betRaiseSlider {
@@ -809,22 +800,9 @@ main input {
     pointer-events: none;
 }
 
-.bet-presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.bet-presets button {
-    padding: 8px 12px;
-    font-size: 0.95rem;
-}
-
 /* ---------- Responsive ---------- */
 
 @media (max-width: 800px) {
-    .stats-grid,
     .content-grid {
         grid-template-columns: 1fr;
     }
