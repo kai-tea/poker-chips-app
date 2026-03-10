@@ -2,7 +2,7 @@ package com.pokerchipsapp.dto;
 
 public class RaiseRequest {
     private String name;
-    private int raiseAmount;
+    private int raiseToAmount;
 
     public RaiseRequest() {}
 
@@ -10,15 +10,15 @@ public class RaiseRequest {
         return name;
     }
 
-    public int getRaiseAmount() {
-        return raiseAmount;
+    public int getRaiseToAmount() {
+        return raiseToAmount;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setRaiseAmount(int raiseAmount) {
-        this.raiseAmount = raiseAmount;
+    public void setRaiseToAmount(int raiseToAmount) {
+        this.raiseToAmount = raiseToAmount;
     }
 }

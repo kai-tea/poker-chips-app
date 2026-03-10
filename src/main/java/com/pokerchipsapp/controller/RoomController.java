@@ -88,7 +88,7 @@ public class RoomController {
 
     @PostMapping("/{code}/raise")
     public Player raise(@PathVariable String code, @RequestBody RaiseRequest body) {
-        return roomService.raise(code, body.getName(), body.getRaiseAmount());
+        return roomService.raise(code, body.getName(), body.getRaiseToAmount());
     }
 
     @PostMapping("/{code}/fold")

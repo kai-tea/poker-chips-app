@@ -365,31 +365,34 @@ public class RoomService {
 
         validateTurn(room, player);
 
-        int amountToCall = room.getCurrentBet() - player.getCurrentRoundBet();
+        int targetRoundBet = raiseAmount;
 
-        if (amountToCall < 0) {
-            throw new IllegalStateException("Player is already above the current bet");
+        if (targetRoundBet <= room.getCurrentBet()) {
+            throw new IllegalArgumentException("Raise must exceed current bet");
         }
 
-        int totalAmount = amountToCall + raiseAmount;
+        if (targetRoundBet <= player.getCurrentRoundBet()) {
+            throw new IllegalArgumentException("Raise must exceed current round bet");
+        }
 
-        if (player.getChips() < totalAmount) {
+        int chipsToPutIn = targetRoundBet - player.getCurrentRoundBet();
+
+        if (player.getChips() < chipsToPutIn) {
             throw new IllegalArgumentException("Not enough chips");
         }
 
-        int newRoundBet = player.getCurrentRoundBet() + totalAmount;
         int maxMatchableRoundBet = getMaxMatchableRoundBet(room, player.getName());
-        if (maxMatchableRoundBet >= 0 && newRoundBet > maxMatchableRoundBet) {
+        if (maxMatchableRoundBet >= 0 && targetRoundBet > maxMatchableRoundBet) {
             throw new IllegalArgumentException("Raise exceeds the effective stack of remaining opponents");
         }
 
-        player.setChips(player.getChips() - totalAmount);
-        player.setCurrentRoundBet(newRoundBet);
+        player.setChips(player.getChips() - chipsToPutIn);
+        player.setCurrentRoundBet(targetRoundBet);
         player.setActedThisRound(true);
         player.setLastAction("RAISE");
 
-        room.setPot(room.getPot() + totalAmount);
-        room.setCurrentBet(player.getCurrentRoundBet());
+        room.setPot(room.getPot() + chipsToPutIn);
+        room.setCurrentBet(targetRoundBet);
 
         for (Player p : room.getPlayers()) {
             if (!p.isFolded() && !p.getName().equalsIgnoreCase(player.getName())) {

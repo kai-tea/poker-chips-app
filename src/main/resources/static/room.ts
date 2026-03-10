@@ -481,6 +481,7 @@ function updateBetRaiseControls(room: Room): void {
         betRaiseSlider.disabled = true;
         betRaiseActionButton.disabled = true;
         betRaiseActionButton.innerText = "Bet / Raise";
+        betRaiseActionButton.style.display = "none";
         if (betRaiseValue) {
             betRaiseValue.innerText = "0";
         }
@@ -514,18 +515,19 @@ function updateBetRaiseControls(room: Room): void {
     betRaiseSlider.disabled = !canUseSlider;
 
     const hundredBbCap = bigBlind * 100;
-    const baseMax = Math.max(0, Math.min(me.chips, hundredBbCap));
+    const baseMax = Math.max(0, Math.min(me.currentRoundBet + me.chips, hundredBbCap));
     const maxMatchableRoundBet = room.players
         .filter(p => !p.folded && p.name.toLowerCase() !== me.name.toLowerCase())
         .reduce((max, p) => Math.max(max, p.currentRoundBet + p.chips), -1);
     const effectiveCap =
         maxMatchableRoundBet >= 0
-            ? (room.currentBet === 0
-                ? Math.max(0, maxMatchableRoundBet - me.currentRoundBet)
-                : Math.max(0, maxMatchableRoundBet - room.currentBet))
+            ? Math.min(baseMax, maxMatchableRoundBet)
             : baseMax;
-    const sliderMax = Math.max(0, Math.min(baseMax, effectiveCap));
-    const sliderMin = 0;
+    const sliderMax = Math.max(0, effectiveCap);
+    const minRaiseTarget = room.currentBet > 0
+        ? Math.max(room.currentBet + smallBlind, me.currentRoundBet + 1)
+        : 0;
+    const sliderMin = Math.min(minRaiseTarget, sliderMax);
 
     betRaiseSlider.min = String(sliderMin);
     betRaiseSlider.max = String(sliderMax);
@@ -564,12 +566,14 @@ function updateBetRaiseControls(room: Room): void {
         !me.folded &&
         isMyTurn &&
         room.currentBet > 0 &&
-        currentValue > 0 &&
-        currentValue <= me.chips;
+        currentValue > room.currentBet &&
+        currentValue > me.currentRoundBet &&
+        currentValue <= (me.currentRoundBet + me.chips);
 
     betRaiseActionButton.disabled = !(canBet || canRaise);
     betRaiseActionButton.innerText =
         room.currentBet === 0 ? "Bet" : "Raise";
+    betRaiseActionButton.style.display = (inActiveRound && !me.folded && isMyTurn) ? "inline-flex" : "none";
 
     updateSliderFill();
 }
@@ -615,7 +619,6 @@ function updateAvailableActions(room: Room): void {
         setActionVisibility(foldButton, false);
         setActionVisibility(raiseButton, false);
         setActionVisibility(checkFoldButton, false);
-        setActionVisibility(betRaiseActionButton, false);
 
         if (resolveShowdownButton) {
             resolveShowdownButton.disabled = !isHost;
@@ -636,7 +639,6 @@ function updateAvailableActions(room: Room): void {
         setActionVisibility(foldButton, false);
         setActionVisibility(raiseButton, false);
         setActionVisibility(checkFoldButton, false);
-        setActionVisibility(betRaiseActionButton, false);
         return;
     }
 
@@ -647,16 +649,16 @@ function updateAvailableActions(room: Room): void {
     const canRaise = room.currentBet > 0;
     const canFold = true;
     const currentValue = getSliderAmount();
-    const canBetRaiseValue = currentValue > 0 && currentValue <= me.chips;
-    const canBetRaiseAction = (canBet || canRaise) && canBetRaiseValue;
-
-
+    const canBetRaiseValue = room.currentBet === 0
+        ? currentValue > 0 && currentValue <= me.chips
+        : currentValue > room.currentBet &&
+            currentValue > me.currentRoundBet &&
+            currentValue <= (me.currentRoundBet + me.chips);
     setActionVisibility(checkButton, canCheck);
     setActionVisibility(callButton, canCall);
     setActionVisibility(foldButton, canFold);
     setActionVisibility(raiseButton, canRaise);
     setActionVisibility(checkFoldButton, true);
-    setActionVisibility(betRaiseActionButton, canBetRaiseAction);
 
     if (checkFoldButton) {
         checkFoldButton.innerText = canCheck ? "Check / Fold" : "Check / Fold";
@@ -793,8 +795,8 @@ function renderRoom(room: Room): void {
     renderPlayers(room.players, room.currentPlayerIndex);
     renderWaitingPlayers(room.waitingPlayers ?? []);
     renderTableSeats(room);
-    updateAvailableActions(room);
     updateBetRaiseControls(room);
+    updateAvailableActions(room);
     renderShowdownControls(room);
     renderPreCheckFold(room);
     renderHostChipControls(room);
@@ -959,7 +961,7 @@ async function raise(raiseAmount: number): Promise<void> {
         },
         body: JSON.stringify({
             name: playerName,
-            raiseAmount: raiseAmount
+            raiseToAmount: raiseAmount
         })
     });
 
@@ -996,8 +998,8 @@ async function refreshRoom(): Promise<void> {
         renderPlayers(room.players, room.currentPlayerIndex);
         renderWaitingPlayers(room.waitingPlayers ?? []);
         renderTableSeats(room);
-        updateAvailableActions(room);
         updateBetRaiseControls(room);
+        updateAvailableActions(room);
         renderShowdownControls(room);
         renderPreCheckFold(room);
         renderHostChipControls(room);
