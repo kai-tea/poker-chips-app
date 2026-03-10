@@ -46,6 +46,11 @@ const setPlayerChipsButton = document.getElementById("setPlayerChipsButton");
 const hostKickSection = document.getElementById("hostKickSection");
 const kickPlayerSelect = document.getElementById("kickPlayerSelect");
 const kickPlayerButton = document.getElementById("kickPlayerButton");
+const hostSeatingSection = document.getElementById("hostSeatingSection");
+const hostSeatingList = document.getElementById("hostSeatingList");
+const saveSeatingButton = document.getElementById("saveSeatingButton");
+const seatingEditHint = document.getElementById("seatingEditHint");
+let draggingPlayerName = null;
 // game state functions
 function renderShowdownControls(room) {
     if (!showdownSection || !winnerSelect || !resolveShowdownButton)
@@ -141,6 +146,8 @@ function renderPlayers(players, currentPlayerIndex) {
 function renderTableSeats(room) {
     const activePlayers = [...room.players].sort((a, b) => a.seatIndex - b.seatIndex);
     const currentPlayer = room.players[room.currentPlayerIndex];
+    const canEditSeating = room.host.toLowerCase() === playerName.toLowerCase() &&
+        (room.phase === "WAITING_FOR_PLAYERS" || room.phase === "ROUND_OVER");
     const centerX = 50;
     const centerY = 50;
     const radiusX = 40;
@@ -242,6 +249,67 @@ function renderTableSeats(room) {
         seatContainer.style.display = "block";
         seatContainer.style.left = `${x}%`;
         seatContainer.style.top = `${y}%`;
+        seatContainer.dataset.playerName = player.name;
+        seatContainer.dataset.seatIndex = String(player.seatIndex);
+        seatContainer.draggable = canEditSeating;
+        seatContainer.classList.toggle("seat-drop-target", false);
+        seatContainer.ondragstart = canEditSeating
+            ? (event) => {
+                draggingPlayerName = player.name;
+                event.dataTransfer?.setData("text/plain", player.name);
+                event.dataTransfer?.setDragImage(seatContainer, 0, 0);
+            }
+            : null;
+        seatContainer.ondragover = canEditSeating
+            ? (event) => {
+                event.preventDefault();
+            }
+            : null;
+        seatContainer.ondragenter = canEditSeating
+            ? () => {
+                seatContainer.classList.add("seat-drop-target");
+            }
+            : null;
+        seatContainer.ondragleave = canEditSeating
+            ? () => {
+                seatContainer.classList.remove("seat-drop-target");
+            }
+            : null;
+        seatContainer.ondrop = canEditSeating
+            ? async (event) => {
+                event.preventDefault();
+                seatContainer.classList.remove("seat-drop-target");
+                const sourceName = draggingPlayerName || event.dataTransfer?.getData("text/plain");
+                const targetName = player.name;
+                if (!sourceName || sourceName.toLowerCase() === targetName.toLowerCase()) {
+                    draggingPlayerName = null;
+                    return;
+                }
+                try {
+                    const assignments = room.players.map(p => ({
+                        playerName: p.name,
+                        seatIndex: p.seatIndex
+                    }));
+                    const source = assignments.find(a => a.playerName.toLowerCase() === sourceName.toLowerCase());
+                    const target = assignments.find(a => a.playerName.toLowerCase() === targetName.toLowerCase());
+                    if (!source || !target) {
+                        draggingPlayerName = null;
+                        return;
+                    }
+                    const temp = source.seatIndex;
+                    source.seatIndex = target.seatIndex;
+                    target.seatIndex = temp;
+                    await setSeatingAsHost(assignments);
+                }
+                catch (err) {
+                    console.error(err);
+                    console.error("Set seating failed");
+                }
+                finally {
+                    draggingPlayerName = null;
+                }
+            }
+            : null;
         const isCurrentTurn = !!currentPlayer &&
             currentPlayer.name.toLowerCase() === player.name.toLowerCase();
         if (isCurrentTurn) {
@@ -635,6 +703,43 @@ function renderHostKickControls(room) {
         kickPlayerSelect.appendChild(option);
     }
 }
+function renderHostSeatingControls(room) {
+    if (!hostSeatingSection || !hostSeatingList || !saveSeatingButton)
+        return;
+    const isHost = room.host.toLowerCase() === playerName.toLowerCase();
+    if (!isHost) {
+        hostSeatingSection.style.display = "none";
+        if (seatingEditHint)
+            seatingEditHint.style.display = "none";
+        return;
+    }
+    hostSeatingSection.style.display = "block";
+    if (seatingEditHint) {
+        const canEdit = room.phase === "WAITING_FOR_PLAYERS" || room.phase === "ROUND_OVER";
+        seatingEditHint.style.display = canEdit ? "block" : "none";
+    }
+    hostSeatingList.innerHTML = "";
+    const playerCount = room.players.length;
+    saveSeatingButton.disabled = playerCount === 0;
+    for (const player of room.players) {
+        const row = document.createElement("div");
+        row.className = "host-seating-row";
+        const label = document.createElement("label");
+        label.innerText = player.name;
+        const select = document.createElement("select");
+        select.dataset.playerName = player.name;
+        for (let i = 0; i < playerCount; i++) {
+            const option = document.createElement("option");
+            option.value = String(i);
+            option.innerText = `Seat ${i + 1}`;
+            select.appendChild(option);
+        }
+        select.value = String(player.seatIndex);
+        row.appendChild(label);
+        row.appendChild(select);
+        hostSeatingList.appendChild(row);
+    }
+}
 function renderRoom(room) {
     renderGameState(room);
     renderPlayers(room.players, room.currentPlayerIndex);
@@ -646,6 +751,7 @@ function renderRoom(room) {
     renderPreCheckFold(room);
     renderHostChipControls(room);
     renderHostKickControls(room);
+    renderHostSeatingControls(room);
 }
 async function setPreCheckFold(enabled) {
     const response = await fetch(`/room/${encodeURIComponent(roomCode)}/pre-check-fold`, {
@@ -816,6 +922,7 @@ async function refreshRoom() {
         renderShowdownControls(room);
         renderPreCheckFold(room);
         renderHostChipControls(room);
+        renderHostSeatingControls(room);
     }
     catch (err) {
         console.error("refreshRoom failed", err);
@@ -856,6 +963,21 @@ async function kickPlayerAsHost() {
         body: JSON.stringify({
             hostName: playerName,
             playerName: selectedPlayer
+        })
+    });
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+}
+async function setSeatingAsHost(assignments) {
+    const response = await fetch(`/room/${encodeURIComponent(roomCode)}/set-seating`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            hostName: playerName,
+            assignments: assignments
         })
     });
     if (!response.ok) {
@@ -1025,6 +1147,35 @@ kickPlayerButton?.addEventListener("click", async () => {
     catch (err) {
         console.error(err);
         console.error("Kick player failed");
+    }
+});
+saveSeatingButton?.addEventListener("click", async () => {
+    if (!hostSeatingList) {
+        console.error("Seating list not found");
+        return;
+    }
+    const selects = Array.from(hostSeatingList.querySelectorAll("select"));
+    const assignments = [];
+    const usedSeats = new Set();
+    for (const select of selects) {
+        const player = select.dataset.playerName;
+        if (!player)
+            continue;
+        const seatIndex = Number(select.value);
+        assignments.push({ playerName: player, seatIndex });
+        usedSeats.add(seatIndex);
+    }
+    if (assignments.length !== selects.length || usedSeats.size !== assignments.length) {
+        console.error("Invalid seating selection");
+        return;
+    }
+    try {
+        await setSeatingAsHost(assignments);
+        await refreshRoom();
+    }
+    catch (err) {
+        console.error(err);
+        console.error("Set seating failed");
     }
 });
 let stompClient = null;

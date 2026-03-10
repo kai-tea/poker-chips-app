@@ -10,8 +10,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import static com.pokerchipsapp.model.GamePhase.*;
 
@@ -621,6 +625,113 @@ public class RoomService {
         }
 
         reassignHostIfNeeded(room, playerNameToKick);
+        save(room);
+    }
+    public void setSeatingAsHost(String code, String hostName, List<com.pokerchipsapp.dto.PlayerSeatAssignment> assignments) {
+        if (hostName == null || hostName.isBlank()) {
+            throw new IllegalArgumentException("hostName required");
+        }
+
+        Room room = get(code);
+
+        if (!room.getHost().equalsIgnoreCase(hostName)) {
+            throw new IllegalStateException("Only the host can set seating");
+        }
+
+        if (room.getPhase() != WAITING_FOR_PLAYERS && room.getPhase() != ROUND_OVER) {
+            throw new IllegalStateException("Cannot change seating during an active round");
+        }
+
+        if (assignments == null) {
+            throw new IllegalArgumentException("assignments required");
+        }
+
+        List<Player> players = room.getPlayers();
+        int playerCount = players.size();
+
+        if (assignments.size() != playerCount) {
+            throw new IllegalArgumentException("All active players must be assigned exactly once");
+        }
+
+        Map<String, com.pokerchipsapp.dto.PlayerSeatAssignment> assignmentByName = new HashMap<>();
+        Set<Integer> seatIndices = new HashSet<>();
+
+        for (com.pokerchipsapp.dto.PlayerSeatAssignment assignment : assignments) {
+            if (assignment == null || assignment.getPlayerName() == null || assignment.getPlayerName().isBlank()) {
+                throw new IllegalArgumentException("playerName required for seating assignment");
+            }
+
+            String key = assignment.getPlayerName().toLowerCase();
+            if (assignmentByName.containsKey(key)) {
+                throw new IllegalArgumentException("Duplicate player assignment: " + assignment.getPlayerName());
+            }
+
+            int seatIndex = assignment.getSeatIndex();
+            if (seatIndex < 0 || seatIndex >= playerCount) {
+                throw new IllegalArgumentException("Invalid seat index: " + seatIndex);
+            }
+
+            if (!seatIndices.add(seatIndex)) {
+                throw new IllegalArgumentException("Duplicate seat index: " + seatIndex);
+            }
+
+            assignmentByName.put(key, assignment);
+        }
+
+        for (Player player : players) {
+            if (!assignmentByName.containsKey(player.getName().toLowerCase())) {
+                throw new IllegalArgumentException("Missing seating assignment for player: " + player.getName());
+            }
+        }
+
+        String dealerName = null;
+        if (room.getDealerIndex() >= 0 && room.getDealerIndex() < players.size()) {
+            dealerName = players.get(room.getDealerIndex()).getName();
+        }
+
+        String currentPlayerName = null;
+        if (room.getCurrentPlayerIndex() >= 0 && room.getCurrentPlayerIndex() < players.size()) {
+            currentPlayerName = players.get(room.getCurrentPlayerIndex()).getName();
+        }
+
+        for (Player player : players) {
+            com.pokerchipsapp.dto.PlayerSeatAssignment assignment =
+                    assignmentByName.get(player.getName().toLowerCase());
+            player.setSeatIndex(assignment.getSeatIndex());
+        }
+
+        players.sort((a, b) -> Integer.compare(a.getSeatIndex(), b.getSeatIndex()));
+
+        for (int i = 0; i < players.size(); i++) {
+            players.get(i).setSeatIndex(i);
+        }
+
+        if (dealerName != null) {
+            int dealerIndex = -1;
+            for (int i = 0; i < players.size(); i++) {
+                if (players.get(i).getName().equalsIgnoreCase(dealerName)) {
+                    dealerIndex = i;
+                    break;
+                }
+            }
+            if (dealerIndex >= 0) {
+                room.setDealerIndex(dealerIndex);
+            }
+        }
+
+        if (currentPlayerName != null) {
+            int currentIndex = -1;
+            for (int i = 0; i < players.size(); i++) {
+                if (players.get(i).getName().equalsIgnoreCase(currentPlayerName)) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+            if (currentIndex >= 0) {
+                room.setCurrentPlayerIndex(currentIndex);
+            }
+        }
+
         save(room);
     }
 

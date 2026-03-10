@@ -139,4 +139,9 @@ public class RoomController {
         roomService.kickPlayer(code, request.hostName(), request.playerName());
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{code}/set-seating")
+    public void setSeating(@PathVariable String code, @RequestBody SetSeatingRequest body) {
+        roomService.setSeatingAsHost(code, body.getHostName(), body.getAssignments());
+    }
 }

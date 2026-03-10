@@ -290,6 +290,8 @@ main input {
 
 .table-card {
     margin-bottom: 16px;
+    padding-bottom: 140px;
+    position: relative;
 }
 
 .poker-table {
@@ -300,6 +302,39 @@ main input {
     background: transparent;
     border: none;
     box-shadow: none;
+}
+
+.table-controls-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    z-index: 6;
+}
+
+.table-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 520px;
+    max-width: 620px;
+    min-width: 360px;
+    flex-wrap: nowrap;
+}
+
+.table-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: wrap;
 }
 
 /* outer dark shell */
@@ -663,6 +698,35 @@ main input {
     min-width: 0;
 }
 
+.host-seating-list {
+    display: grid;
+    gap: 8px;
+    margin: 8px 0 12px;
+}
+
+.host-seating-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.host-seating-row label {
+    min-width: 140px;
+    font-weight: 600;
+}
+
+.host-seating-hint {
+    margin: 6px 0 10px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.seat-drop-target {
+    outline: 2px dashed rgba(17, 220, 172, 0.65);
+    outline-offset: 2px;
+}
+
 #betRaiseSlider {
     --fill-size: 0%;
     -webkit-appearance: none;
@@ -837,12 +901,62 @@ main input {
         font-size: 0.8rem;
     }
 
-    .action-row {
-        flex-direction: column;
+    .table-card {
+        padding-bottom: 0;
+    }
+
+    .table-controls-overlay {
+        top: auto;
+        bottom: 14px;
+        left: 14px;
+        right: 14px;
+        align-items: flex-end;
+        gap: 10px;
+    }
+
+    .table-controls-left {
+        flex: 0 0 54%;
+        max-width: 54%;
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .table-controls-right {
+        flex: 1 1 46%;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .bet-form-controls {
+        flex: 1 1 auto;
+        max-width: none;
+        gap: 8px;
+    }
+
+    .slider-wrapper {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .bet-amount-input {
+        width: 70px;
+        min-width: 70px;
+    }
+
+    .tune-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1.1rem;
     }
 
     input,
     select {
         width: 100%;
+    }
+
+    .table-controls-overlay .bet-amount-input {
+        width: 70px;
+        min-width: 70px;
     }
 }
