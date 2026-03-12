@@ -1,14 +1,12 @@
 package com.pokerchipsapp.service;
 
 import com.pokerchipsapp.dto.PlayerStatusResponse;
-import com.pokerchipsapp.model.GamePhase;
 import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
 import com.pokerchipsapp.repo.RoomRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -318,6 +316,8 @@ public class RoomService {
         player.setActedThisRound(true);
         player.setLastAction("CHECK");
 
+        room = pauseForActionVisibility(room);
+
         afterAction(room);
 
         save(room);
@@ -348,6 +348,10 @@ public class RoomService {
         player.setLastAction("CALL");
 
         room.setPot(room.getPot() + amountToCall);
+
+        // broadcast fold for visibility
+        room = pauseForActionVisibility(room);
+        player = getPlayer(room, name);
 
         if (getActivePlayers(room).size() == 1) {
             awardPotToLastActivePlayer(room);
@@ -425,6 +429,9 @@ public class RoomService {
         player.setFolded(true);
         player.setActedThisRound(true);
         player.setLastAction("FOLD");
+
+        // broadcast fold for visibility
+        room = pauseForActionVisibility(room);
 
         if (getActivePlayers(room).size() == 1) {
             awardPotToLastActivePlayer(room);
@@ -880,12 +887,16 @@ public class RoomService {
             applyQueuedActionIfNeeded(room);
         }
     }
-    private void pauseForActionVisibility() {
+    private Room pauseForActionVisibility(Room room) {
+        room = save(room);
+
         try {
-            Thread.sleep(1200);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+
+        return room;
     }
     private int getNextActivePlayerIndex(Room room, int startIndex) {
         List<Player> players = room.getPlayers();
