@@ -252,7 +252,7 @@ function renderTableSeats(room: Room): void {
     for (const seatEl of seatElements) {
         if (!seatEl || !seatEl.parentElement) continue;
         seatEl.parentElement.style.display = "none";
-        seatEl.parentElement.classList.remove("seat-active", "seat-inactive", "seat-folded");
+        seatEl.parentElement.classList.remove("seat-active", "seat-inactive", "seat-folded", "seat-me");
         seatEl.innerHTML = "";
     }
 
@@ -408,6 +408,7 @@ function renderTableSeats(room: Room): void {
 
         if (player.name.toLowerCase() === playerName.toLowerCase()) {
             nameDiv.style.color = "var(--accent)";
+            seatContainer.classList.add("seat-me");
         }
 
         const isDealer = player.seatIndex === room.dealerIndex;
