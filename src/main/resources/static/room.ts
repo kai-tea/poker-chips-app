@@ -448,7 +448,7 @@ function renderCommunityCards(phase: string): void {
     for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
 
-        card.classList.remove("card-flip", "showdown-card");
+        card.classList.remove("card-flip", "showdown-card", "community-card-dim", "community-card-current");
         void card.offsetWidth;
 
         if (i < visibleCount) {
@@ -461,6 +461,20 @@ function renderCommunityCards(phase: string): void {
 
             if (phase === "SHOWDOWN") {
                 card.classList.add("showdown-card");
+            }
+
+            if (phase === "TURN") {
+                if (i < 3) {
+                    card.classList.add("community-card-dim");
+                } else if (i === 3) {
+                    card.classList.add("community-card-current");
+                }
+            } else if (phase === "RIVER") {
+                if (i < 4) {
+                    card.classList.add("community-card-dim");
+                } else if (i === 4) {
+                    card.classList.add("community-card-current");
+                }
             }
         } else {
             card.className = "community-card hidden-card";
