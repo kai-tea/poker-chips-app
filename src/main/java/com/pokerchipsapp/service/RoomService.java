@@ -50,8 +50,8 @@ public class RoomService {
     }
 
     private Room save(Room room){
-        repo.save(room);
         room.setLastActivityAt(Instant.now());
+        repo.save(room);
         roomBroadcastService.broadcastRoom(room);
         return room;
     }
@@ -67,11 +67,11 @@ public class RoomService {
             System.out.println("smallBlind = " + settings.getSmallBlind());
 
             Room room = new Room(code, host, settings);
-            Room saved = repo.save(room);
+            save(room);
 
-            System.out.println("Room saved successfully with code = " + saved.getCode());
+            System.out.println("Room saved successfully with code = " + room.getCode());
 
-            return saved;
+            return room;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -800,7 +800,7 @@ public class RoomService {
     private void setFirstActivePlayer(Room room) {
         List<Player> players = room.getPlayers();
 
-        for (int i = 0; i < players.size(); i++) {
+        for (int i = room.getSmallBlindIndex(); i < players.size(); i++) {
             if (!players.get(i).isFolded()) {
                 room.setCurrentPlayerIndex(i);
                 return;
@@ -947,6 +947,7 @@ public class RoomService {
             p.setCurrentRoundBet(0);
             p.setActedThisRound(false);
             p.setPreCheckFold(false);
+            p.setFolded(false);
         }
 
         room.moveWaitingPlayers();

@@ -80,6 +80,7 @@ public class Room {
     }
 
     public void rotateDealer() {
+        if (getActivePlayerCount() == 0) return;
         dealerIndex = (dealerIndex + 1) % getActivePlayerCount();
     }
 
