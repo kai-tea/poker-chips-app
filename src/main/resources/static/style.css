@@ -251,6 +251,7 @@ main input {
     align-items: center;
     margin-top: 12px;
 }
+
 .action-row-main {
     flex-wrap: nowrap;
     width: 100%;
