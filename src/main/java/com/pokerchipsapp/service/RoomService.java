@@ -42,7 +42,7 @@ public class RoomService {
         while (true) {
             StringBuilder code = new StringBuilder();
 
-            for (int i = 0; i < 6; i++) {
+            for (int i = 0; i < 4; i++) {
                 int index = random.nextInt(chars.length());
                 code.append(chars.charAt(index));
             }
