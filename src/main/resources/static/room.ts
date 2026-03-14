@@ -483,6 +483,8 @@ function renderCommunityCards(phase: string): void {
     const cards = Array.from(communityCardsElement.children) as HTMLElement[];
 
     const faces = ["", "", "", "", ""];
+    const flipDurationMs = 550;
+    const flipHalfMs = Math.floor(flipDurationMs / 2);
 
     let visibleCount = 0;
 
@@ -502,6 +504,28 @@ function renderCommunityCards(phase: string): void {
             visibleCount = 0;
     }
 
+    const shouldStaggerFlop = phase === "FLOP" && previousVisibleCommunityCards === 0;
+
+    const applyFaceClasses = (card: HTMLElement, index: number): void => {
+        if (phase === "SHOWDOWN") {
+            card.classList.add("showdown-card");
+        }
+
+        if (phase === "TURN") {
+            if (index < 3) {
+                card.classList.add("community-card-dim");
+            } else if (index === 3) {
+                card.classList.add("community-card-current");
+            }
+        } else if (phase === "RIVER") {
+            if (index < 4) {
+                card.classList.add("community-card-dim");
+            } else if (index === 4) {
+                card.classList.add("community-card-current");
+            }
+        }
+    };
+
     for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
 
@@ -509,29 +533,26 @@ function renderCommunityCards(phase: string): void {
         void card.offsetWidth;
 
         if (i < visibleCount) {
-            card.className = "community-card";
-            card.innerText = faces[i];
+            const isNew = i >= previousVisibleCommunityCards;
 
-            if (i >= previousVisibleCommunityCards) {
-                card.classList.add("card-flip");
-            }
+            if (isNew) {
+                const delayMs = shouldStaggerFlop ? i * 200 : 0;
+                card.className = "community-card hidden-card";
+                card.innerText = "";
 
-            if (phase === "SHOWDOWN") {
-                card.classList.add("showdown-card");
-            }
+                setTimeout(() => {
+                    card.classList.add("card-flip");
+                }, delayMs);
 
-            if (phase === "TURN") {
-                if (i < 3) {
-                    card.classList.add("community-card-dim");
-                } else if (i === 3) {
-                    card.classList.add("community-card-current");
-                }
-            } else if (phase === "RIVER") {
-                if (i < 4) {
-                    card.classList.add("community-card-dim");
-                } else if (i === 4) {
-                    card.classList.add("community-card-current");
-                }
+                setTimeout(() => {
+                    card.classList.remove("hidden-card");
+                    card.innerText = faces[i];
+                    applyFaceClasses(card, i);
+                }, delayMs + flipHalfMs);
+            } else {
+                card.className = "community-card";
+                card.innerText = faces[i];
+                applyFaceClasses(card, i);
             }
         } else {
             card.className = "community-card hidden-card";
