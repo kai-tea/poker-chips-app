@@ -93,8 +93,13 @@ joinRoomButton?.addEventListener("click", async () => {
             return;
         }
 
-        await joinRoom(code, name);
-        goToRoom(code, name);
+        const normalizedCode = code.toUpperCase();
+        if (joinRoomCodeInput) {
+            joinRoomCodeInput.value = normalizedCode;
+        }
+
+        await joinRoom(normalizedCode, name);
+        goToRoom(normalizedCode, name);
     } catch (err) {
         console.error(err);
         setStatus("Could not join room.");
