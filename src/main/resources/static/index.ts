@@ -8,13 +8,19 @@ const joinRoomCodeInput = document.getElementById("joinRoomCodeInput") as HTMLIn
 const joinRoomButton = document.getElementById("joinRoomButton");
 
 const statusMessage = document.getElementById("statusMessage");
+const statusMessageSection = document.getElementById("statusMessageSection");
 
 console.log("playerNameInput", playerNameInput);
 console.log("createRoomButton", createRoomButton);
 
 function setStatus(message: string): void {
     if (statusMessage) {
-        statusMessage.innerText = message;
+        const trimmed = message.trim();
+        statusMessage.innerText = trimmed;
+        statusMessage.style.display = trimmed ? "block" : "none";
+        if (statusMessageSection) {
+            statusMessageSection.style.display = trimmed ? "block" : "none";
+        }
     }
 }
 

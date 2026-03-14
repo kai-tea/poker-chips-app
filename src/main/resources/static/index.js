@@ -6,11 +6,17 @@ const createRoomButton = document.getElementById("createRoomButton");
 const joinRoomCodeInput = document.getElementById("joinRoomCodeInput");
 const joinRoomButton = document.getElementById("joinRoomButton");
 const statusMessage = document.getElementById("statusMessage");
+const statusMessageSection = document.getElementById("statusMessageSection");
 console.log("playerNameInput", playerNameInput);
 console.log("createRoomButton", createRoomButton);
 function setStatus(message) {
     if (statusMessage) {
-        statusMessage.innerText = message;
+        const trimmed = message.trim();
+        statusMessage.innerText = trimmed;
+        statusMessage.style.display = trimmed ? "block" : "none";
+        if (statusMessageSection) {
+            statusMessageSection.style.display = trimmed ? "block" : "none";
+        }
     }
 }
 function saveRoomContext(roomCode, playerName) {

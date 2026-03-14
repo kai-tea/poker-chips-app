@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Roboto+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
     --bg: #0f1115;
@@ -31,7 +31,7 @@ body {
     min-height: 100vh;
     background: linear-gradient(180deg, #0b0d12 0%, #111522 100%);
     color: var(--text);
-    font-family: "Manrope", system-ui, sans-serif;
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
     overscroll-behavior-y: none;
 }
 
@@ -182,11 +182,18 @@ main input {
     margin-right: 10px;
 }
 
+.app-description {
+    text-align: center;
+    margin: 6px 0 18px;
+    color: var(--muted);
+}
+
 #statusMessage {
     margin-top: 16px;
     text-align: center;
     color: var(--muted);
-    font-family: "Roboto Mono", monospace;
+    font-family: "IBM Plex Mono", "Menlo", monospace;
+    display: none;
 }
 
 /* ---------- Room page ---------- */
@@ -341,6 +348,7 @@ main input {
             inset 0 -1px 0 rgba(0,0,0,0.25);
 }
 
+#callButton,\n+#foldButton,\n+#checkButton,\n+#preCheckFoldButton {\n+    color: #04211c;\n+    border: 1px solid rgba(255,255,255,0.18);\n+    background:\n+            linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 18%, transparent 18%),\n+            linear-gradient(180deg, #6ff1dd 0%, #3ad1b7 52%, #149a83 100%);\n+    box-shadow:\n+            0 5px 0 #0f6d61,\n+            0 10px 18px rgba(0,0,0,0.26),\n+            inset 0 1px 0 rgba(255,255,255,0.30),\n+            inset 0 -2px 0 rgba(0,0,0,0.20);\n+}\n+\n+#callButton:hover:not(:disabled),\n+#foldButton:hover:not(:disabled),\n+#checkButton:hover:not(:disabled),\n+#preCheckFoldButton:hover:not(:disabled) {\n+    background:\n+            linear-gradient(180deg, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.06) 18%, transparent 18%),\n+            linear-gradient(180deg, #7cf5e4 0%, #45dac0 52%, #17ad93 100%);\n+    box-shadow:\n+            0 6px 0 #0f6d61,\n+            0 12px 20px rgba(0,0,0,0.28),\n+            inset 0 1px 0 rgba(255,255,255,0.34),\n+            inset 0 -2px 0 rgba(0,0,0,0.22);\n+}\n+\n+#callButton:active:not(:disabled),\n+#foldButton:active:not(:disabled),\n+#checkButton:active:not(:disabled),\n+#preCheckFoldButton:active:not(:disabled) {\n+    transform: translateY(4px);\n+    box-shadow:\n+            0 2px 0 #0f6d61,\n+            0 6px 10px rgba(0,0,0,0.20),\n+            inset 0 1px 0 rgba(255,255,255,0.22),\n+            inset 0 -1px 0 rgba(0,0,0,0.25);\n+}\n+\n #preCheckFoldButton.active {\n     background: var(--accent);\n     color: #04211c;\n     border-color: transparent;\n     font-weight: 700;\n }\n*** End Patch", "yield_time_ms": 1000}]} }
 #preCheckFoldButton.active {
     background: var(--accent);
     color: #04211c;
