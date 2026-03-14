@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.pokerchipsapp.model.GamePhase.*;
@@ -25,6 +28,8 @@ public class RoomService {
     private final RoomRepository repo;
     private final Random random = new Random();
     private final RoomBroadcastService roomBroadcastService;
+    private final ScheduledExecutorService actionDelayExecutor = Executors.newSingleThreadScheduledExecutor();
+    private static final long ACTION_DELAY_MS = 1000;
 
     public RoomService(RoomRepository repo, RoomBroadcastService roomBroadcastService) {
         this.repo = repo;
@@ -318,7 +323,6 @@ public class RoomService {
         }
 
         afterAction(room);
-        save(room);
         return player;
     }
     public void check(String code, String name) {
@@ -334,11 +338,7 @@ public class RoomService {
         player.setActedThisRound(true);
         player.setLastAction("CHECK");
 
-        room = pauseForActionVisibility(room);
-
         afterAction(room);
-
-        save(room);
     }
     public Player call(String code, String name) {
         Room room = get(code);
@@ -372,10 +372,6 @@ public class RoomService {
 
         room.setPot(room.getPot() + amountToPutIn);
 
-        // broadcast fold for visibility
-        room = pauseForActionVisibility(room);
-        player = getPlayer(room, name);
-
         if (getActivePlayers(room).size() == 1) {
             awardPotToLastActivePlayer(room);
             save(room);
@@ -383,7 +379,6 @@ public class RoomService {
         }
 
         afterAction(room);
-        save(room);
         return player;
     }
     public Player raise(String code, String name, int raiseAmount) {
@@ -439,7 +434,6 @@ public class RoomService {
         }
 
         afterAction(room);
-        save(room);
         return player;
     }
     public void fold(String code, String name) {
@@ -452,9 +446,6 @@ public class RoomService {
         player.setActedThisRound(true);
         player.setLastAction("FOLD");
 
-        // broadcast fold for visibility
-        room = pauseForActionVisibility(room);
-
         if (getActivePlayers(room).size() == 1) {
             awardPotToLastActivePlayer(room);
             save(room);
@@ -462,7 +453,6 @@ public class RoomService {
         }
 
         afterAction(room);
-        save(room);
     }
     public void setPreCheckFold(String code, String name, boolean enabled) {
         Room room = get(code);
@@ -612,6 +602,8 @@ public class RoomService {
         room.setCurrentBet(0);
         room.setPhase(ROUND_OVER);
         room.setSidePots(new ArrayList<>());
+        room.setActionDelayUntil(null);
+        room.setActionDelayUntil(null);
 
         for (Player p : room.getPlayers()) {
             p.setCurrentRoundBet(0);
@@ -906,6 +898,7 @@ public class RoomService {
         room.setPot(0);
         room.setCurrentBet(0);
         room.setSidePots(new ArrayList<>());
+        room.setActionDelayUntil(null);
 
         for (Player p : room.getPlayers()) {
             p.setFolded(false);
@@ -919,15 +912,43 @@ public class RoomService {
     }
     private void afterAction(Room room) {
         if (isBettingRoundComplete(room)) {
-            advancePhase(room);
-
-            while (room.getPhase() != SHOWDOWN && room.getPhase() != ROUND_OVER && !hasActionablePlayer(room)) {
-                advancePhase(room);
-            }
+            schedulePhaseAdvance(room);
         } else {
             moveToNextPlayer(room);
             applyQueuedActionIfNeeded(room);
+            save(room);
         }
+    }
+    private void schedulePhaseAdvance(Room room) {
+        room.setActionDelayUntil(Instant.now().plusMillis(ACTION_DELAY_MS));
+        save(room);
+
+        String roomCode = room.getCode();
+
+        actionDelayExecutor.schedule(() -> {
+            try {
+                Room latest = get(roomCode);
+                Instant delayUntil = latest.getActionDelayUntil();
+
+                if (delayUntil == null || Instant.now().isBefore(delayUntil)) {
+                    return;
+                }
+
+                latest.setActionDelayUntil(null);
+
+                if (isBettingRoundComplete(latest)) {
+                    advancePhase(latest);
+
+                    while (latest.getPhase() != SHOWDOWN && latest.getPhase() != ROUND_OVER && !hasActionablePlayer(latest)) {
+                        advancePhase(latest);
+                    }
+                }
+
+                save(latest);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, ACTION_DELAY_MS, TimeUnit.MILLISECONDS);
     }
     private void moveToNextPlayer(Room room) {
         List<Player> players = room.getPlayers();
@@ -1023,6 +1044,11 @@ public class RoomService {
         return room.getPlayer(name);
     }
     private void validateTurn(Room room, Player player) {
+        Instant delayUntil = room.getActionDelayUntil();
+        if (delayUntil != null && Instant.now().isBefore(delayUntil)) {
+            throw new IllegalStateException("Action pending");
+        }
+
         Player currentPlayer = room.getPlayers().get(room.getCurrentPlayerIndex());
 
         if (!currentPlayer.getName().equalsIgnoreCase(player.getName())) {
@@ -1069,17 +1095,6 @@ public class RoomService {
             moveToNextPlayer(room);
             applyQueuedActionIfNeeded(room);
         }
-    }
-    private Room pauseForActionVisibility(Room room) {
-        room = save(room);
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        return room;
     }
     private int getNextActivePlayerIndex(Room room, int startIndex) {
         List<Player> players = room.getPlayers();

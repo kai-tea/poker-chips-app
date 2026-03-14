@@ -27,6 +27,7 @@ public class Room {
     private int smallBlindIndex = -1;
     private int bigBlindIndex = -1;
     private List<SidePot> sidePots = new ArrayList<>();
+    private Instant actionDelayUntil;
 
     public Room() {
     }
@@ -54,6 +55,14 @@ public class Room {
 
     public void setLastActivityAt(Instant lastActivityAt) {
         this.lastActivityAt = lastActivityAt;
+    }
+
+    public Instant getActionDelayUntil() {
+        return actionDelayUntil;
+    }
+
+    public void setActionDelayUntil(Instant actionDelayUntil) {
+        this.actionDelayUntil = actionDelayUntil;
     }
 
     public void addPlayer(String name) {
