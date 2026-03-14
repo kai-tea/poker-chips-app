@@ -51,6 +51,7 @@ type Room = {
 // game state elements
 const roomTitleElement = document.getElementById("roomTitle");
 const roomInfoElement = document.getElementById("roomInfo");
+const copyRoomCodeButton = document.getElementById("copyRoomCodeButton") as HTMLButtonElement | null;
 const playerListElement = document.getElementById("playerList");
 const waitingPlayersListElement = document.getElementById("waitingPlayersList");
 const resetChipsButton = document.getElementById("resetChipsButton") as HTMLButtonElement | null;
@@ -1287,6 +1288,41 @@ if (roomTitleElement) {
 if (roomInfoElement) {
     roomInfoElement.innerText = `Player: ${playerName}`;
 }
+
+async function copyRoomCode(): Promise<void> {
+    const originalText = copyRoomCodeButton?.innerText ?? "Copy";
+
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(roomCode);
+        } else {
+            const temp = document.createElement("textarea");
+            temp.value = roomCode;
+            temp.style.position = "fixed";
+            temp.style.opacity = "0";
+            document.body.appendChild(temp);
+            temp.focus();
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+        }
+
+        if (copyRoomCodeButton) {
+            copyRoomCodeButton.innerText = "Copied";
+            setTimeout(() => {
+                if (copyRoomCodeButton) {
+                    copyRoomCodeButton.innerText = originalText;
+                }
+            }, 1200);
+        }
+    } catch (err) {
+        console.error("Copy room code failed", err);
+    }
+}
+
+copyRoomCodeButton?.addEventListener("click", () => {
+    void copyRoomCode();
+});
 
 resetChipsButton?.addEventListener("click", async () => {
     try {

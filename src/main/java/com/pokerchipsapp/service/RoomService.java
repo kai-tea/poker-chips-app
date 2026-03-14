@@ -79,9 +79,10 @@ public class RoomService {
         }
     }
     public Room get(String code){
+        String normalizedCode = code == null ? null : code.toUpperCase();
         return repo
-                .findRoomByCode(code)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found " + code));
+                .findRoomByCode(normalizedCode)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found " + normalizedCode));
     }
     public Room join(String code, String name){
 
