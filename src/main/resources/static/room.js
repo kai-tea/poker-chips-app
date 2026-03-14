@@ -1213,8 +1213,7 @@ betRaiseActionButton?.addEventListener("click", async () => {
 incrementBetButton?.addEventListener("click", async () => {
     try {
         incrementSlider();
-        const room = await getRoom();
-        updateBetRaiseControls(room);
+        renderSliderValue();
     }
     catch (err) {
         console.error(err);
@@ -1223,8 +1222,7 @@ incrementBetButton?.addEventListener("click", async () => {
 decrementBetButton?.addEventListener("click", async () => {
     try {
         decrementSlider();
-        const room = await getRoom();
-        updateBetRaiseControls(room);
+        renderSliderValue();
     }
     catch (err) {
         console.error(err);
