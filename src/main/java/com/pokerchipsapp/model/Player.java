@@ -10,6 +10,8 @@ public class Player {
     private boolean folded = false;
     private boolean actedThisRound = false;
     private int currentRoundBet = 0;
+    private boolean allIn = false;
+    private int handContribution = 0;
 
     public Player() {
     }
@@ -82,5 +84,21 @@ public class Player {
 
     public void setCurrentRoundBet(int currentRoundBet) {
         this.currentRoundBet = currentRoundBet;
+    }
+
+    public boolean isAllIn() {
+        return allIn;
+    }
+
+    public void setAllIn(boolean allIn) {
+        this.allIn = allIn;
+    }
+
+    public int getHandContribution() {
+        return handContribution;
+    }
+
+    public void setHandContribution(int handContribution) {
+        this.handContribution = handContribution;
     }
 }

@@ -118,7 +118,7 @@ public class RoomController {
 
     @PostMapping("/{code}/resolve-showdown")
     public void resolveShowdown(@PathVariable String code, @RequestBody ResolveShowdownRequest body) {
-        roomService.resolveShowdown(code, body.getHostName(), body.getWinnerName());
+        roomService.resolveShowdown(code, body.getHostName(), body.getRankedHands(), body.getWinnerNames(), body.getWinnerName());
     }
 
     @PostMapping("/{code}/set-player-chips")

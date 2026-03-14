@@ -819,6 +819,51 @@ main input {
     font-weight: 600;
 }
 
+.showdown-winners {
+    display: grid;
+    gap: 8px;
+    margin: 8px 0 12px;
+}
+
+.showdown-pot-list {
+    display: grid;
+    gap: 6px;
+    margin: 6px 0 8px;
+}
+
+.showdown-pot-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.showdown-pot-label {
+    font-weight: 600;
+}
+
+.showdown-pot-eligible {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.showdown-help {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.showdown-winner-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.showdown-winner-row label {
+    min-width: 140px;
+    font-weight: 600;
+}
+
 .host-seating-hint {
     margin: 6px 0 10px;
     color: var(--muted);

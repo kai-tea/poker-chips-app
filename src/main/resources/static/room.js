@@ -32,7 +32,8 @@ const betRaiseValue = document.getElementById("betRaiseValue");
 const betRaiseActionButton = document.getElementById("betRaiseActionButton");
 const tablePotDisplayElement = document.getElementById("tablePotDisplay");
 const showdownSection = document.getElementById("showdownSection");
-const winnerSelect = document.getElementById("winnerSelect");
+const showdownPotList = document.getElementById("showdownPotList");
+const showdownRanksList = document.getElementById("showdownRanksList");
 const resolveShowdownButton = document.getElementById("resolveShowdownButton");
 const communityCardsElement = document.getElementById("communityCards");
 const decrementBetButton = document.getElementById("decrementBetButton");
@@ -54,7 +55,7 @@ const tableControlsOverlay = document.querySelector(".table-controls-overlay");
 let draggingPlayerName = null;
 // game state functions
 function renderShowdownControls(room) {
-    if (!showdownSection || !winnerSelect || !resolveShowdownButton)
+    if (!showdownSection || !showdownPotList || !showdownRanksList || !resolveShowdownButton)
         return;
     const isHost = room.host.toLowerCase() === playerName.toLowerCase();
     const isShowdown = room.phase === "SHOWDOWN";
@@ -63,14 +64,54 @@ function renderShowdownControls(room) {
         return;
     }
     showdownSection.style.display = "block";
-    winnerSelect.innerHTML = "";
-    for (const player of room.players) {
-        if (player.folded)
-            continue;
-        const option = document.createElement("option");
-        option.value = player.name;
-        option.innerText = player.name;
-        winnerSelect.appendChild(option);
+    showdownPotList.innerHTML = "";
+    showdownRanksList.innerHTML = "";
+    const activePlayers = room.players.filter(p => !p.folded);
+    const sidePots = room.sidePots && room.sidePots.length > 0
+        ? room.sidePots
+        : [{ amount: room.pot, eligiblePlayers: activePlayers.map(p => p.name) }];
+    for (let i = 0; i < sidePots.length; i++) {
+        const pot = sidePots[i];
+        const row = document.createElement("div");
+        row.className = "showdown-pot-row";
+        const label = document.createElement("span");
+        label.className = "showdown-pot-label";
+        label.innerText = `Pot ${i + 1}: ${pot.amount}`;
+        const eligible = document.createElement("span");
+        eligible.className = "showdown-pot-eligible";
+        eligible.innerText = `Eligible: ${pot.eligiblePlayers.join(", ")}`;
+        row.appendChild(label);
+        row.appendChild(eligible);
+        showdownPotList.appendChild(row);
+    }
+    const hint = document.createElement("div");
+    hint.className = "showdown-help";
+    hint.innerText = "Rank players once (1 = best). Use the same rank for ties.";
+    showdownRanksList.appendChild(hint);
+    const sortedPlayers = [...activePlayers].sort((a, b) => a.seatIndex - b.seatIndex);
+    const rankCount = sortedPlayers.length;
+    for (let i = 0; i < sortedPlayers.length; i++) {
+        const player = sortedPlayers[i];
+        const row = document.createElement("div");
+        row.className = "showdown-winner-row";
+        const label = document.createElement("label");
+        label.innerText = player.name;
+        const select = document.createElement("select");
+        select.dataset.playerName = player.name;
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.innerText = "Rank...";
+        select.appendChild(placeholder);
+        for (let rank = 1; rank <= rankCount; rank++) {
+            const option = document.createElement("option");
+            option.value = String(rank);
+            option.innerText = `#${rank}`;
+            select.appendChild(option);
+        }
+        select.value = String(i + 1);
+        row.appendChild(label);
+        row.appendChild(select);
+        showdownRanksList.appendChild(row);
     }
 }
 function renderWaitingPlayers(waitingPlayers = []) {
@@ -494,13 +535,7 @@ function updateBetRaiseControls(room) {
     betRaiseSlider.disabled = !canUseSlider;
     const hundredBbCap = bigBlind * 100;
     const baseMax = Math.max(0, Math.min(me.currentRoundBet + me.chips, hundredBbCap));
-    const maxMatchableRoundBet = room.players
-        .filter(p => !p.folded && p.name.toLowerCase() !== me.name.toLowerCase())
-        .reduce((max, p) => Math.max(max, p.currentRoundBet + p.chips), -1);
-    const effectiveCap = maxMatchableRoundBet >= 0
-        ? Math.min(baseMax, maxMatchableRoundBet)
-        : baseMax;
-    const sliderMax = Math.max(0, effectiveCap);
+    const sliderMax = Math.max(0, baseMax);
     const minRaiseTarget = room.currentBet > 0
         ? Math.max(room.currentBet + smallBlind, me.currentRoundBet + 1)
         : 0;
@@ -949,10 +984,30 @@ async function refreshRoom() {
     }
 }
 async function resolveShowdown() {
-    if (!winnerSelect) {
-        throw new Error("Winner select not found");
+    if (!showdownRanksList) {
+        throw new Error("Showdown ranking list not found");
     }
-    const winnerName = winnerSelect.value;
+    const selects = Array.from(showdownRanksList.querySelectorAll("select"));
+    const rankedMap = new Map();
+    for (const select of selects) {
+        const player = select.dataset.playerName;
+        const rankValue = Number(select.value);
+        if (!player) {
+            continue;
+        }
+        if (!select.value) {
+            throw new Error("All players must be ranked");
+        }
+        if (!rankedMap.has(rankValue)) {
+            rankedMap.set(rankValue, []);
+        }
+        rankedMap.get(rankValue)?.push(player);
+    }
+    const rankKeys = Array.from(rankedMap.keys()).sort((a, b) => a - b);
+    const rankedHands = rankKeys.map(rank => rankedMap.get(rank) ?? []);
+    if (rankedHands.length === 0) {
+        throw new Error("No rankings provided");
+    }
     const response = await fetch(`/room/${encodeURIComponent(roomCode)}/resolve-showdown`, {
         method: "POST",
         headers: {
@@ -960,7 +1015,7 @@ async function resolveShowdown() {
         },
         body: JSON.stringify({
             hostName: playerName,
-            winnerName: winnerName
+            rankedHands: rankedHands
         })
     });
     if (!response.ok) {

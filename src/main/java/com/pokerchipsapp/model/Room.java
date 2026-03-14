@@ -26,6 +26,7 @@ public class Room {
     private int currentBet = 0;
     private int smallBlindIndex = -1;
     private int bigBlindIndex = -1;
+    private List<SidePot> sidePots = new ArrayList<>();
 
     public Room() {
     }
@@ -196,6 +197,14 @@ public class Room {
 
     public void setCurrentBet(int currentBet) {
         this.currentBet = currentBet;
+    }
+
+    public List<SidePot> getSidePots() {
+        return sidePots;
+    }
+
+    public void setSidePots(List<SidePot> sidePots) {
+        this.sidePots = sidePots != null ? sidePots : new ArrayList<>();
     }
 
     public int getSmallBlindIndex() {

@@ -4,16 +4,19 @@ import com.pokerchipsapp.dto.PlayerStatusResponse;
 import com.pokerchipsapp.model.Player;
 import com.pokerchipsapp.model.Room;
 import com.pokerchipsapp.model.RoomSettings;
+import com.pokerchipsapp.model.SidePot;
 import com.pokerchipsapp.repo.RoomRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.pokerchipsapp.model.GamePhase.*;
 
@@ -225,25 +228,40 @@ public class RoomService {
 
         save(room);
     }
-    private int getMaxMatchableRoundBet(Room room, String actingPlayerName) {
-        int maxMatchable = -1;
+    private List<SidePot> buildSidePots(Room room) {
+        List<Player> players = room.getPlayers();
+        List<Integer> levels = players.stream()
+                .map(Player::getHandContribution)
+                .filter(amount -> amount > 0)
+                .distinct()
+                .sorted()
+                .toList();
 
-        for (Player p : room.getPlayers()) {
-            if (p.getName().equalsIgnoreCase(actingPlayerName)) {
-                continue;
+        List<SidePot> pots = new ArrayList<>();
+        int previous = 0;
+
+        for (int level : levels) {
+            int contributingPlayers = 0;
+            List<String> eligible = new ArrayList<>();
+
+            for (Player p : players) {
+                if (p.getHandContribution() >= level) {
+                    contributingPlayers++;
+                    if (!p.isFolded()) {
+                        eligible.add(p.getName());
+                    }
+                }
             }
 
-            if (p.isFolded()) {
-                continue;
+            int amount = (level - previous) * contributingPlayers;
+            if (amount > 0) {
+                pots.add(new SidePot(amount, eligible));
             }
 
-            int reachableTotal = p.getCurrentRoundBet() + p.getChips();
-            if (reachableTotal > maxMatchable) {
-                maxMatchable = reachableTotal;
-            }
+            previous = level;
         }
 
-        return maxMatchable;
+        return pots;
     }
 
     // player actions
@@ -269,15 +287,14 @@ public class RoomService {
             );
         }
 
-        int maxMatchableRoundBet = getMaxMatchableRoundBet(room, player.getName());
-        if (maxMatchableRoundBet >= 0 && newRoundBet > maxMatchableRoundBet) {
-            throw new IllegalArgumentException("Bet exceeds the effective stack of remaining opponents");
-        }
-
         player.setChips(player.getChips() - amount);
         player.setCurrentRoundBet(newRoundBet);
+        player.setHandContribution(player.getHandContribution() + amount);
+        if (player.getChips() == 0) {
+            player.setAllIn(true);
+        }
         player.setActedThisRound(true);
-        player.setLastAction("BET");
+        player.setLastAction(player.isAllIn() ? "ALL_IN" : "BET");
 
         if (player.getCurrentRoundBet() > room.getCurrentBet()) {
             room.setCurrentBet(player.getCurrentRoundBet());
@@ -338,16 +355,21 @@ public class RoomService {
             throw new IllegalStateException("Nothing to call; use check instead");
         }
 
-        if (player.getChips() < amountToCall) {
+        int amountToPutIn = Math.min(player.getChips(), amountToCall);
+        if (amountToPutIn == 0) {
             throw new IllegalArgumentException("Not enough chips");
         }
 
-        player.setChips(player.getChips() - amountToCall);
-        player.setCurrentRoundBet(player.getCurrentRoundBet() + amountToCall);
+        player.setChips(player.getChips() - amountToPutIn);
+        player.setCurrentRoundBet(player.getCurrentRoundBet() + amountToPutIn);
+        player.setHandContribution(player.getHandContribution() + amountToPutIn);
+        if (player.getChips() == 0) {
+            player.setAllIn(true);
+        }
         player.setActedThisRound(true);
-        player.setLastAction("CALL");
+        player.setLastAction(player.isAllIn() ? "ALL_IN" : "CALL");
 
-        room.setPot(room.getPot() + amountToCall);
+        room.setPot(room.getPot() + amountToPutIn);
 
         // broadcast fold for visibility
         room = pauseForActionVisibility(room);
@@ -389,15 +411,14 @@ public class RoomService {
             throw new IllegalArgumentException("Not enough chips");
         }
 
-        int maxMatchableRoundBet = getMaxMatchableRoundBet(room, player.getName());
-        if (maxMatchableRoundBet >= 0 && targetRoundBet > maxMatchableRoundBet) {
-            throw new IllegalArgumentException("Raise exceeds the effective stack of remaining opponents");
-        }
-
         player.setChips(player.getChips() - chipsToPutIn);
         player.setCurrentRoundBet(targetRoundBet);
+        player.setHandContribution(player.getHandContribution() + chipsToPutIn);
+        if (player.getChips() == 0) {
+            player.setAllIn(true);
+        }
         player.setActedThisRound(true);
-        player.setLastAction("RAISE");
+        player.setLastAction(player.isAllIn() ? "ALL_IN" : "RAISE");
 
         room.setPot(room.getPot() + chipsToPutIn);
         room.setCurrentBet(targetRoundBet);
@@ -448,6 +469,9 @@ public class RoomService {
 
         if (player.isFolded()) {
             throw new IllegalStateException("Folded player cannot queue actions");
+        }
+        if (player.isAllIn()) {
+            throw new IllegalStateException("All-in player cannot queue actions");
         }
 
         if (room.getPhase() == WAITING_FOR_PLAYERS || room.getPhase() == SHOWDOWN || room.getPhase() == ROUND_OVER) {
@@ -520,7 +544,7 @@ public class RoomService {
         resetRoundState(room);
         save(room);
     }
-    public void resolveShowdown(String code, String hostName, String winnerName) {
+    public void resolveShowdown(String code, String hostName, List<List<String>> rankedHands, List<String> winnerNames, String fallbackWinnerName) {
         Room room = get(code);
 
         if (room.getPhase() != SHOWDOWN) {
@@ -530,23 +554,155 @@ public class RoomService {
         if (!room.getHost().equalsIgnoreCase(hostName)) {
             throw new IllegalStateException("Only the host can resolve showdown");
         }
+        List<SidePot> sidePots = room.getSidePots();
+        if (sidePots == null || sidePots.isEmpty()) {
+            sidePots = buildSidePots(room);
+        }
 
-        Player winner = getPlayer(room, winnerName);
+        if (sidePots.isEmpty()) {
+            sidePots = List.of(new SidePot(room.getPot(), room.getPlayers().stream()
+                    .filter(p -> !p.isFolded())
+                    .map(Player::getName)
+                    .toList()));
+        }
 
-        winner.setChips(winner.getChips() + room.getPot());
+        List<Player> activePlayers = room.getPlayers().stream()
+                .filter(p -> !p.isFolded())
+                .toList();
+
+        List<List<String>> rankedHandsToUse = normalizeRankedHands(rankedHands, activePlayers);
+
+        if (rankedHandsToUse != null) {
+            awardSidePotsByRanking(room, sidePots, rankedHandsToUse);
+        } else {
+            List<String> winnersToUse = winnerNames != null ? winnerNames : List.of();
+            if (winnersToUse.isEmpty()) {
+                if (fallbackWinnerName == null || fallbackWinnerName.isBlank()) {
+                    throw new IllegalArgumentException("Winner names required");
+                }
+                winnersToUse = List.of(fallbackWinnerName);
+            }
+
+            if (winnersToUse.size() != sidePots.size()) {
+                throw new IllegalArgumentException("Winner count must match side pot count");
+            }
+
+            for (int i = 0; i < sidePots.size(); i++) {
+                SidePot pot = sidePots.get(i);
+                String winnerName = winnersToUse.get(i);
+
+                if (winnerName == null || winnerName.isBlank()) {
+                    throw new IllegalArgumentException("Winner name required for pot " + (i + 1));
+                }
+
+                boolean eligible = pot.getEligiblePlayers().stream()
+                        .anyMatch(name -> name.equalsIgnoreCase(winnerName));
+                if (!eligible) {
+                    throw new IllegalArgumentException("Winner not eligible for pot " + (i + 1));
+                }
+
+                Player winner = getPlayer(room, winnerName);
+                winner.setChips(winner.getChips() + pot.getAmount());
+                winner.setLastAction("WIN");
+            }
+        }
+
         room.setPot(0);
         room.setCurrentBet(0);
         room.setPhase(ROUND_OVER);
+        room.setSidePots(new ArrayList<>());
 
         for (Player p : room.getPlayers()) {
             p.setCurrentRoundBet(0);
             p.setActedThisRound(false);
             p.setFolded(false);
+            p.setAllIn(false);
+            p.setHandContribution(0);
+            p.setPreCheckFold(false);
+            p.setLastAction(null);
         }
 
         room.moveWaitingPlayers();
 
         save(room);
+    }
+
+    private List<List<String>> normalizeRankedHands(List<List<String>> rankedHands, List<Player> activePlayers) {
+        if (rankedHands == null || rankedHands.isEmpty()) {
+            return null;
+        }
+
+        List<List<String>> normalized = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        Set<String> activeNames = activePlayers.stream()
+                .map(p -> p.getName().toLowerCase())
+                .collect(Collectors.toSet());
+
+        for (List<String> group : rankedHands) {
+            if (group == null || group.isEmpty()) {
+                throw new IllegalArgumentException("Ranked hands cannot contain empty groups");
+            }
+
+            List<String> normalizedGroup = new ArrayList<>();
+            for (String name : group) {
+                if (name == null || name.isBlank()) {
+                    throw new IllegalArgumentException("Ranked hand contains blank player name");
+                }
+
+                String key = name.toLowerCase();
+                if (!activeNames.contains(key)) {
+                    throw new IllegalArgumentException("Player " + name + " is not eligible for showdown");
+                }
+
+                if (!seen.add(key)) {
+                    throw new IllegalArgumentException("Player " + name + " appears multiple times in rankings");
+                }
+
+                normalizedGroup.add(name);
+            }
+
+            normalized.add(normalizedGroup);
+        }
+
+        if (seen.size() != activeNames.size()) {
+            throw new IllegalArgumentException("All active players must be ranked exactly once");
+        }
+
+        return normalized;
+    }
+
+    private void awardSidePotsByRanking(Room room, List<SidePot> sidePots, List<List<String>> rankedHands) {
+        for (int i = 0; i < sidePots.size(); i++) {
+            SidePot pot = sidePots.get(i);
+            List<String> winners = null;
+
+            for (List<String> group : rankedHands) {
+                List<String> eligibleGroup = group.stream()
+                        .filter(name -> pot.getEligiblePlayers().stream()
+                                .anyMatch(eligibleName -> eligibleName.equalsIgnoreCase(name)))
+                        .toList();
+
+                if (!eligibleGroup.isEmpty()) {
+                    winners = eligibleGroup;
+                    break;
+                }
+            }
+
+            if (winners == null || winners.isEmpty()) {
+                throw new IllegalArgumentException("No eligible winner found for pot " + (i + 1));
+            }
+
+            int share = pot.getAmount() / winners.size();
+            int remainder = pot.getAmount() % winners.size();
+
+            for (int w = 0; w < winners.size(); w++) {
+                String winnerName = winners.get(w);
+                Player winner = getPlayer(room, winnerName);
+                int payout = share + (w < remainder ? 1 : 0);
+                winner.setChips(winner.getChips() + payout);
+                winner.setLastAction("WIN");
+            }
+        }
     }
 
 
@@ -748,6 +904,7 @@ public class RoomService {
     private void resetRoundState(Room room) {
         room.setPot(0);
         room.setCurrentBet(0);
+        room.setSidePots(new ArrayList<>());
 
         for (Player p : room.getPlayers()) {
             p.setFolded(false);
@@ -755,16 +912,23 @@ public class RoomService {
             p.setCurrentRoundBet(0);
             p.setPreCheckFold(false);
             p.setLastAction(null);
+            p.setAllIn(false);
+            p.setHandContribution(0);
         }
     }
     private void afterAction(Room room) {
         if (isBettingRoundComplete(room)) {
             advancePhase(room);
+
+            while (room.getPhase() != SHOWDOWN && room.getPhase() != ROUND_OVER && !hasActionablePlayer(room)) {
+                advancePhase(room);
+            }
         } else {
             moveToNextPlayer(room);
             applyQueuedActionIfNeeded(room);
         }
-    }    private void moveToNextPlayer(Room room) {
+    }
+    private void moveToNextPlayer(Room room) {
         List<Player> players = room.getPlayers();
         int size = players.size();
 
@@ -772,7 +936,7 @@ public class RoomService {
             int nextIndex = (room.getCurrentPlayerIndex() + step) % size;
             Player nextPlayer = players.get(nextIndex);
 
-            if (!nextPlayer.isFolded()) {
+            if (!nextPlayer.isFolded() && !nextPlayer.isAllIn()) {
                 room.setCurrentPlayerIndex(nextIndex);
                 return;
             }
@@ -798,8 +962,16 @@ public class RoomService {
             p.setLastAction(null);
         }
 
+        if (room.getPhase() == SHOWDOWN) {
+            room.setSidePots(buildSidePots(room));
+        } else {
+            room.setSidePots(new ArrayList<>());
+        }
+
         if (room.getPhase() != ROUND_OVER) {
-            setFirstActivePlayer(room);
+            if (hasActionablePlayer(room)) {
+                setFirstActivePlayer(room);
+            }
         } else {
             room.moveWaitingPlayers();
         }
@@ -808,7 +980,7 @@ public class RoomService {
         List<Player> players = room.getPlayers();
 
         for (int i = room.getSmallBlindIndex(); i < players.size(); i++) {
-            if (!players.get(i).isFolded()) {
+            if (!players.get(i).isFolded() && !players.get(i).isAllIn()) {
                 room.setCurrentPlayerIndex(i);
                 return;
             }
@@ -824,6 +996,9 @@ public class RoomService {
         }
 
         for (Player p : activePlayers) {
+            if (p.isAllIn()) {
+                continue;
+            }
             if (!p.isActedThisRound()) {
                 return false;
             }
@@ -839,6 +1014,10 @@ public class RoomService {
                 .filter(p -> !p.isFolded())
                 .toList();
     }
+    private boolean hasActionablePlayer(Room room) {
+        return room.getPlayers().stream()
+                .anyMatch(p -> !p.isFolded() && !p.isAllIn());
+    }
     private Player getPlayer(Room room, String name) {
         return room.getPlayer(name);
     }
@@ -851,6 +1030,9 @@ public class RoomService {
 
         if (player.isFolded()) {
             throw new IllegalStateException("Folded player cannot act");
+        }
+        if (player.isAllIn()) {
+            throw new IllegalStateException("All-in player cannot act");
         }
 
         if (room.getPhase() == WAITING_FOR_PLAYERS || room.getPhase() == ROUND_OVER) {
@@ -906,7 +1088,7 @@ public class RoomService {
             int nextIndex = (startIndex + step) % size;
             Player nextPlayer = players.get(nextIndex);
 
-            if (!nextPlayer.isFolded()) {
+            if (!nextPlayer.isFolded() && !nextPlayer.isAllIn()) {
                 return nextIndex;
             }
         }
@@ -919,6 +1101,10 @@ public class RoomService {
 
         player.setChips(player.getChips() - posted);
         player.setCurrentRoundBet(posted);
+        player.setHandContribution(player.getHandContribution() + posted);
+        if (player.getChips() == 0) {
+            player.setAllIn(true);
+        }
         player.setLastAction(actionName);
 
         room.setPot(room.getPot() + posted);
@@ -953,12 +1139,16 @@ public class RoomService {
         room.setPot(0);
         room.setCurrentBet(0);
         room.setPhase(ROUND_OVER);
+        room.setSidePots(new ArrayList<>());
 
         for (Player p : room.getPlayers()) {
             p.setCurrentRoundBet(0);
             p.setActedThisRound(false);
             p.setPreCheckFold(false);
             p.setFolded(false);
+            p.setAllIn(false);
+            p.setHandContribution(0);
+            p.setLastAction(null);
         }
 
         room.moveWaitingPlayers();
