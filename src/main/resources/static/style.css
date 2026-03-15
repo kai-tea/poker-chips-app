@@ -1246,18 +1246,22 @@ main input {
 @media (max-width: 800px) {
     html,
     body {
-        height: 100%;
-        overflow: hidden;
-        overscroll-behavior: none;
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .room-page {
         max-width: none;
-        height: 100vh;
+        height: auto;
+        min-height: 100vh;
         padding: 12px;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        overflow: visible;
     }
 
     .content-grid {
@@ -1266,7 +1270,7 @@ main input {
 
     .poker-table {
         flex: 1 1 auto;
-        height: auto;
+        height: clamp(260px, 46vh, 360px);
         min-height: 0;
     }
 
@@ -1299,21 +1303,29 @@ main input {
     .table-card {
         margin-bottom: 0;
         padding-bottom: 0;
-        flex: 1 1 auto;
-        min-height: 0;
+        flex: 0 0 auto;
+        min-height: auto;
         display: flex;
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
-        overflow: hidden;
+        overflow: visible;
+    }
+
+    @supports (height: 100dvh) {
+        .room-page {
+            min-height: 100dvh;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        }
     }
 
     .table-controls-overlay {
         margin-top: 0;
-        gap: 8px;
+        gap: 6px;
         flex-direction: row;
+        flex-wrap: wrap;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
     }
 
     .table-controls-overlay.mobile-actions-fixed {
@@ -1332,7 +1344,7 @@ main input {
 
     .table-controls-left {
         flex: 1 1 auto;
-        max-width: 58%;
+        max-width: 100%;
         min-width: 0;
         gap: 6px;
     }
@@ -1340,7 +1352,7 @@ main input {
     .table-controls-right {
         flex: 1 1 auto;
         gap: 6px;
-        justify-content: flex-end;
+        justify-content: center;
         flex-wrap: wrap;
     }
 
@@ -1374,5 +1386,32 @@ main input {
     .table-controls-overlay .bet-amount-input {
         width: 64px;
         min-width: 64px;
+    }
+}
+
+@media (max-width: 800px) and (max-height: 720px) {
+    .poker-table {
+        height: clamp(220px, 40vh, 320px);
+    }
+
+    .poker-table::before {
+        inset: 16px 4px 12px 4px;
+        border-radius: 160px / 100px;
+    }
+
+    .poker-table::after {
+        inset: 30px 16px 26px 16px;
+        border-radius: 140px / 88px;
+    }
+
+    .table-surface {
+        inset: 44px 26px 38px 26px;
+        border-radius: 120px / 76px;
+    }
+
+    .seat {
+        min-width: 80px;
+        padding: 6px 8px;
+        font-size: 0.75rem;
     }
 }
