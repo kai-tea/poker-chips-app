@@ -216,6 +216,103 @@ main input {
     margin-bottom: 24px;
 }
 
+.menu-button {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 12;
+    width: 44px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.top-copy-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 12;
+}
+
+.menu-icon {
+    position: relative;
+    width: 20px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 999px;
+    display: block;
+}
+
+.menu-icon::before,
+.menu-icon::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 20px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 999px;
+}
+
+.menu-icon::before {
+    top: -6px;
+}
+
+.menu-icon::after {
+    top: 6px;
+}
+
+.room-menu {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 9, 13, 0.6);
+    display: none;
+    z-index: 40;
+}
+
+.room-menu-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: min(560px, 96vw);
+    background: var(--panel-2);
+    padding: 20px;
+    overflow: auto;
+    box-shadow: 12px 0 30px rgba(0,0,0,0.35);
+}
+
+.menu-close {
+    margin-bottom: 12px;
+}
+
+.menu-open .room-menu {
+    display: block;
+}
+
+.showdown-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 9, 13, 0.65);
+    z-index: 45;
+}
+
+.showdown-modal-card {
+    width: min(520px, 92vw);
+    max-height: 85vh;
+    overflow: auto;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+}
+
 .room-title-row {
     display: flex;
     align-items: center;
@@ -445,7 +542,6 @@ main input {
 
 .table-card {
     margin-bottom: 16px;
-    padding-bottom: 140px;
     position: relative;
 }
 
@@ -460,10 +556,7 @@ main input {
 }
 
 .table-controls-overlay {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 100%;
+    position: static;
     margin-top: 16px;
     display: flex;
     justify-content: space-between;
@@ -602,6 +695,21 @@ main input {
             inset 0 1px 0 rgba(255,255,255,0.05),
             0 8px 18px rgba(0,0,0,0.22);
     z-index: 3;
+}
+
+.seat-empty {
+    background: rgba(12, 18, 28, 0.35);
+    border: 1px dashed rgba(255,255,255,0.18);
+    box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.04),
+            0 6px 14px rgba(0,0,0,0.18);
+}
+
+.seat-empty-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
 }
 
 .seat-label {
@@ -941,6 +1049,32 @@ main input {
     font-weight: 600;
 }
 
+.rank-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: rgba(12, 18, 28, 0.45);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px;
+}
+
+.rank-step {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    line-height: 1;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.rank-value {
+    min-width: 34px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text);
+}
+
 .host-seating-hint {
     margin: 6px 0 10px;
     color: var(--muted);
@@ -948,8 +1082,13 @@ main input {
 }
 
 .seat-drop-target {
-    outline: 2px dashed rgba(17, 220, 172, 0.65);
-    outline-offset: 2px;
+    outline: 2px dashed rgba(17, 220, 172, 0.85);
+    outline-offset: 3px;
+    box-shadow: 0 0 12px rgba(17, 220, 172, 0.25);
+}
+
+.seat-dragging {
+    opacity: 0.65;
 }
 
 #betRaiseSlider {
@@ -1105,12 +1244,30 @@ main input {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 800px) {
+    html,
+    body {
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    .room-page {
+        max-width: none;
+        height: 100vh;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
     .content-grid {
         grid-template-columns: 1fr;
     }
 
     .poker-table {
-        min-height: 380px;
+        flex: 1 1 auto;
+        height: auto;
+        min-height: 0;
     }
 
     .poker-table::before {
@@ -1140,41 +1297,49 @@ main input {
     }
 
     .table-card {
+        margin-bottom: 0;
         padding-bottom: 0;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        overflow: hidden;
     }
 
     .table-controls-overlay {
-        top: auto;
-        bottom: 14px;
-        left: 14px;
-        right: 14px;
-        align-items: flex-end;
-        gap: 10px;
+        margin-top: 0;
+        gap: 8px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .table-controls-overlay.mobile-actions-fixed {
-        position: fixed;
+        position: absolute;
         left: 0;
         right: 0;
-        bottom: 0;
+        bottom: auto;
         top: auto;
-        padding: 10px 14px 12px;
-        background: rgba(12, 18, 28, 0.95);
-        border-top: 1px solid rgba(255,255,255,0.08);
-        box-shadow: 0 -10px 24px rgba(0,0,0,0.35);
-        z-index: 20;
+        margin-top: 0;
+        padding: 0;
+        background: transparent;
+        border-top: none;
+        box-shadow: none;
+        z-index: 6;
     }
 
     .table-controls-left {
-        flex: 0 0 54%;
-        max-width: 54%;
+        flex: 1 1 auto;
+        max-width: 58%;
         min-width: 0;
-        gap: 8px;
+        gap: 6px;
     }
 
     .table-controls-right {
-        flex: 1 1 46%;
-        gap: 8px;
+        flex: 1 1 auto;
+        gap: 6px;
         justify-content: flex-end;
         flex-wrap: wrap;
     }
@@ -1191,14 +1356,14 @@ main input {
     }
 
     .bet-amount-input {
-        width: 70px;
-        min-width: 70px;
+        width: 64px;
+        min-width: 64px;
     }
 
     .tune-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 1.1rem;
+        width: 28px;
+        height: 28px;
+        font-size: 1rem;
     }
 
     input,
@@ -1207,7 +1372,7 @@ main input {
     }
 
     .table-controls-overlay .bet-amount-input {
-        width: 70px;
-        min-width: 70px;
+        width: 64px;
+        min-width: 64px;
     }
 }

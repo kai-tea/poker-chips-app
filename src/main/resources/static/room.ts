@@ -52,6 +52,10 @@ type Room = {
 const roomTitleElement = document.getElementById("roomTitle");
 const roomInfoElement = document.getElementById("roomInfo");
 const copyRoomCodeButton = document.getElementById("copyRoomCodeButton") as HTMLButtonElement | null;
+const copyRoomCodeTopButton = document.getElementById("copyRoomCodeTopButton") as HTMLButtonElement | null;
+const menuToggleButton = document.getElementById("menuToggleButton") as HTMLButtonElement | null;
+const menuCloseButton = document.getElementById("menuCloseButton") as HTMLButtonElement | null;
+const roomMenu = document.getElementById("roomMenu");
 const playerListElement = document.getElementById("playerList");
 const waitingPlayersListElement = document.getElementById("waitingPlayersList");
 const resetChipsButton = document.getElementById("resetChipsButton") as HTMLButtonElement | null;
@@ -67,6 +71,7 @@ const betRaiseValue = document.getElementById("betRaiseValue");
 const betRaiseActionButton = document.getElementById("betRaiseActionButton") as HTMLButtonElement | null;
 const tablePotDisplayElement = document.getElementById("tablePotDisplay");
 const showdownSection = document.getElementById("showdownSection");
+const showdownModal = document.getElementById("showdownModal");
 const showdownPotList = document.getElementById("showdownPotList");
 const showdownRanksList = document.getElementById("showdownRanksList");
 const resolveShowdownButton = document.getElementById("resolveShowdownButton") as HTMLButtonElement | null;
@@ -100,10 +105,16 @@ function renderShowdownControls(room: Room): void {
 
     if (!isShowdown || !isHost) {
         showdownSection.style.display = "none";
+        if (showdownModal) {
+            showdownModal.style.display = "none";
+        }
         return;
     }
 
     showdownSection.style.display = "block";
+    if (showdownModal) {
+        showdownModal.style.display = "flex";
+    }
     showdownPotList.innerHTML = "";
     showdownRanksList.innerHTML = "";
 
@@ -146,25 +157,46 @@ function renderShowdownControls(room: Room): void {
         const label = document.createElement("label");
         label.innerText = player.name;
 
-        const select = document.createElement("select");
-        select.dataset.playerName = player.name;
+        const rankControl = document.createElement("div");
+        rankControl.className = "rank-control";
+        rankControl.dataset.playerName = player.name;
+        rankControl.dataset.rank = String(i + 1);
 
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.innerText = "Rank...";
-        select.appendChild(placeholder);
+        const downButton = document.createElement("button");
+        downButton.type = "button";
+        downButton.className = "rank-step";
+        downButton.innerText = "–";
 
-        for (let rank = 1; rank <= rankCount; rank++) {
-            const option = document.createElement("option");
-            option.value = String(rank);
-            option.innerText = `#${rank}`;
-            select.appendChild(option);
-        }
+        const value = document.createElement("span");
+        value.className = "rank-value";
+        value.innerText = `#${i + 1}`;
 
-        select.value = String(i + 1);
+        const upButton = document.createElement("button");
+        upButton.type = "button";
+        upButton.className = "rank-step";
+        upButton.innerText = "+";
+
+        const clampRank = (next: number): number => Math.max(1, Math.min(rankCount, next));
+
+        const setRank = (next: number): void => {
+            const clamped = clampRank(next);
+            rankControl.dataset.rank = String(clamped);
+            value.innerText = `#${clamped}`;
+        };
+
+        downButton.addEventListener("click", () => {
+            setRank(Number(rankControl.dataset.rank || "1") - 1);
+        });
+        upButton.addEventListener("click", () => {
+            setRank(Number(rankControl.dataset.rank || "1") + 1);
+        });
+
+        rankControl.appendChild(downButton);
+        rankControl.appendChild(value);
+        rankControl.appendChild(upButton);
 
         row.appendChild(label);
-        row.appendChild(select);
+        row.appendChild(rankControl);
         showdownRanksList.appendChild(row);
     }
 }
@@ -304,26 +336,177 @@ function renderTableSeats(room: Room): void {
         document.getElementById("check9"),
     ];
 
-    // reset seats
     for (const seatEl of seatElements) {
         if (!seatEl || !seatEl.parentElement) continue;
         seatEl.parentElement.style.display = "none";
-        seatEl.parentElement.classList.remove("seat-active", "seat-inactive", "seat-folded", "seat-me");
+        seatEl.parentElement.classList.remove("seat-active", "seat-inactive", "seat-folded", "seat-me", "seat-empty", "seat-drop-target", "seat-dragging");
         seatEl.innerHTML = "";
     }
 
-    // reset bets
     for (const betEl of betElements) {
         if (!betEl) continue;
         betEl.style.display = "none";
         betEl.textContent = "";
     }
 
-    // reset checks
     for (const checkEl of checkElements) {
         if (!checkEl) continue;
         checkEl.style.display = "none";
         checkEl.textContent = "";
+    }
+
+    const mePlayer = activePlayers.find(
+        player => player.name.toLowerCase() === playerName.toLowerCase()
+    );
+
+    const clearDropTargets = (): void => {
+        for (const seatEl of seatElements) {
+            if (!seatEl?.parentElement) continue;
+            seatEl.parentElement.classList.remove("seat-drop-target", "seat-dragging");
+        }
+    };
+
+    if (canEditSeating) {
+        const maxSeats = seatElements.length;
+        const baseSeatIndex = mePlayer?.seatIndex ?? 0;
+        const playerBySeat = new Map<number, Player>();
+        for (const player of activePlayers) {
+            playerBySeat.set(player.seatIndex, player);
+        }
+
+        for (let seatIndex = 0; seatIndex < maxSeats; seatIndex++) {
+            const visualIndex = (seatIndex - baseSeatIndex + maxSeats) % maxSeats;
+            const seatEl = seatElements[visualIndex];
+
+            if (!seatEl || !seatEl.parentElement) continue;
+
+            const angle = (Math.PI / 2) + (2 * Math.PI * visualIndex) / maxSeats;
+            const x = centerX + radiusX * Math.cos(angle);
+            const y = centerY + radiusY * Math.sin(angle);
+
+            const seatContainer = seatEl.parentElement;
+            seatContainer.style.display = "block";
+            seatContainer.style.left = `${x}%`;
+            seatContainer.style.top = `${y}%`;
+            seatContainer.dataset.seatIndex = String(seatIndex);
+            seatContainer.classList.remove("seat-active", "seat-inactive", "seat-folded", "seat-me", "seat-empty");
+
+            const player = playerBySeat.get(seatIndex);
+
+            seatContainer.draggable = !!player;
+            seatContainer.classList.toggle("seat-empty", !player);
+            seatContainer.dataset.playerName = player?.name ?? "";
+
+            seatContainer.ondragstart = player
+                ? (event) => {
+                    draggingPlayerName = player.name;
+                    event.dataTransfer?.setData("text/plain", player.name);
+                    const rect = seatContainer.getBoundingClientRect();
+                    event.dataTransfer?.setDragImage(seatContainer, rect.width / 2, rect.height / 2);
+                    event.dataTransfer?.setData("seatIndex", String(seatIndex));
+                    seatContainer.classList.add("seat-dragging");
+                }
+                : null;
+            seatContainer.ondragend = () => {
+                draggingPlayerName = null;
+                clearDropTargets();
+            };
+            seatContainer.ondragover = (event) => {
+                event.preventDefault();
+                if (event.dataTransfer) {
+                    event.dataTransfer.dropEffect = "move";
+                }
+                seatContainer.classList.add("seat-drop-target");
+            };
+            seatContainer.ondragenter = () => {
+                seatContainer.classList.add("seat-drop-target");
+            };
+            seatContainer.ondragleave = () => {
+                seatContainer.classList.remove("seat-drop-target");
+            };
+            seatContainer.ondrop = async (event) => {
+                event.preventDefault();
+                seatContainer.classList.remove("seat-drop-target");
+                const sourceName = draggingPlayerName || event.dataTransfer?.getData("text/plain");
+                if (!sourceName) {
+                    draggingPlayerName = null;
+                    return;
+                }
+
+                const targetSeatIndex = Number(seatContainer.dataset.seatIndex || "-1");
+                if (targetSeatIndex < 0) {
+                    draggingPlayerName = null;
+                    return;
+                }
+
+                try {
+                    const assignments = room.players.map(p => ({
+                        playerName: p.name,
+                        seatIndex: p.seatIndex
+                    }));
+                    const source = assignments.find(a => a.playerName.toLowerCase() === sourceName.toLowerCase());
+                    if (!source) {
+                        draggingPlayerName = null;
+                        return;
+                    }
+
+                    const target = assignments.find(a => a.seatIndex === targetSeatIndex);
+                    if (target) {
+                        const temp = source.seatIndex;
+                        source.seatIndex = target.seatIndex;
+                        target.seatIndex = temp;
+                    } else {
+                        source.seatIndex = targetSeatIndex;
+                    }
+
+                    await setSeatingAsHost(assignments);
+                } catch (err) {
+                    console.error(err);
+                    console.error("Set seating failed");
+                } finally {
+                    draggingPlayerName = null;
+                    clearDropTargets();
+                }
+            };
+
+            seatEl.innerHTML = "";
+
+            if (!player) {
+                const emptyDiv = document.createElement("div");
+                emptyDiv.className = "seat-empty-label";
+                emptyDiv.innerText = "Empty";
+                seatEl.appendChild(emptyDiv);
+                continue;
+            }
+
+            seatContainer.classList.add("seat-inactive");
+
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "seat-player-name";
+            nameDiv.innerText = player.name;
+
+            const chipsDiv = document.createElement("div");
+            chipsDiv.className = "seat-player-chips";
+            chipsDiv.innerText = `${player.chips}`;
+
+            seatEl.appendChild(nameDiv);
+            seatEl.appendChild(chipsDiv);
+
+            if (player.name.toLowerCase() === playerName.toLowerCase()) {
+                nameDiv.style.color = "var(--accent)";
+                seatContainer.classList.add("seat-me");
+            }
+
+            const isDealer = player.seatIndex === room.dealerIndex;
+            if (isDealer) {
+                const dealerDiv = document.createElement("div");
+                dealerDiv.className = "seat-dealer-button";
+                dealerDiv.innerText = "D";
+                seatEl.appendChild(dealerDiv);
+            }
+        }
+
+        return;
     }
 
     const meIndex = activePlayers.findIndex(
@@ -376,63 +559,12 @@ function renderTableSeats(room: Room): void {
         seatContainer.dataset.playerName = player.name;
         seatContainer.dataset.seatIndex = String(player.seatIndex);
 
-        seatContainer.draggable = canEditSeating;
-        seatContainer.classList.toggle("seat-drop-target", false);
-        seatContainer.ondragstart = canEditSeating
-            ? (event) => {
-                draggingPlayerName = player.name;
-                event.dataTransfer?.setData("text/plain", player.name);
-                event.dataTransfer?.setDragImage(seatContainer, 0, 0);
-            }
-            : null;
-        seatContainer.ondragover = canEditSeating
-            ? (event) => {
-                event.preventDefault();
-            }
-            : null;
-        seatContainer.ondragenter = canEditSeating
-            ? () => {
-                seatContainer.classList.add("seat-drop-target");
-            }
-            : null;
-        seatContainer.ondragleave = canEditSeating
-            ? () => {
-                seatContainer.classList.remove("seat-drop-target");
-            }
-            : null;
-        seatContainer.ondrop = canEditSeating
-            ? async (event) => {
-                event.preventDefault();
-                seatContainer.classList.remove("seat-drop-target");
-                const sourceName = draggingPlayerName || event.dataTransfer?.getData("text/plain");
-                const targetName = player.name;
-                if (!sourceName || sourceName.toLowerCase() === targetName.toLowerCase()) {
-                    draggingPlayerName = null;
-                    return;
-                }
-                try {
-                    const assignments = room.players.map(p => ({
-                        playerName: p.name,
-                        seatIndex: p.seatIndex
-                    }));
-                    const source = assignments.find(a => a.playerName.toLowerCase() === sourceName.toLowerCase());
-                    const target = assignments.find(a => a.playerName.toLowerCase() === targetName.toLowerCase());
-                    if (!source || !target) {
-                        draggingPlayerName = null;
-                        return;
-                    }
-                    const temp = source.seatIndex;
-                    source.seatIndex = target.seatIndex;
-                    target.seatIndex = temp;
-                    await setSeatingAsHost(assignments);
-                } catch (err) {
-                    console.error(err);
-                    console.error("Set seating failed");
-                } finally {
-                    draggingPlayerName = null;
-                }
-            }
-            : null;
+        seatContainer.draggable = false;
+        seatContainer.ondragstart = null;
+        seatContainer.ondragover = null;
+        seatContainer.ondragenter = null;
+        seatContainer.ondragleave = null;
+        seatContainer.ondrop = null;
 
         const isCurrentTurn =
             !!currentPlayer &&
@@ -964,6 +1096,7 @@ function renderHostSeatingControls(room: Room): void {
     hostSeatingList.innerHTML = "";
 
     const playerCount = room.players.length;
+    const maxSeats = 10;
     saveSeatingButton.disabled = playerCount === 0;
 
     for (const player of room.players) {
@@ -976,7 +1109,7 @@ function renderHostSeatingControls(room: Room): void {
         const select = document.createElement("select");
         select.dataset.playerName = player.name;
 
-        for (let i = 0; i < playerCount; i++) {
+        for (let i = 0; i < maxSeats; i++) {
             const option = document.createElement("option");
             option.value = String(i);
             option.innerText = `Seat ${i + 1}`;
@@ -1206,6 +1339,7 @@ async function refreshRoom(): Promise<void> {
         renderPreCheckFold(room);
         renderHostChipControls(room);
         renderHostSeatingControls(room);
+        renderMenuButton(room);
         updateMobileActionBarMode();
     } catch (err) {
         console.error("refreshRoom failed", err);
@@ -1216,18 +1350,18 @@ async function resolveShowdown(): Promise<void> {
         throw new Error("Showdown ranking list not found");
     }
 
-    const selects = Array.from(showdownRanksList.querySelectorAll("select"));
+    const controls = Array.from(showdownRanksList.querySelectorAll(".rank-control")) as HTMLElement[];
     const rankedMap = new Map<number, string[]>();
 
-    for (const select of selects) {
-        const player = select.dataset.playerName;
-        const rankValue = Number(select.value);
+    for (const control of controls) {
+        const player = control.dataset.playerName;
+        const rankValue = Number(control.dataset.rank || "0");
 
         if (!player) {
             continue;
         }
 
-        if (!select.value) {
+        if (!rankValue) {
             throw new Error("All players must be ranked");
         }
 
@@ -1309,9 +1443,20 @@ if (roomTitleElement) {
 if (roomInfoElement) {
     roomInfoElement.innerText = `Player: ${playerName}`;
 }
+if (copyRoomCodeButton) {
+    copyRoomCodeButton.innerText = roomCode;
+}
+if (copyRoomCodeTopButton) {
+    copyRoomCodeTopButton.innerText = roomCode;
+}
+
+function getCopyButtons(): HTMLButtonElement[] {
+    return [copyRoomCodeButton, copyRoomCodeTopButton].filter(Boolean) as HTMLButtonElement[];
+}
 
 async function copyRoomCode(): Promise<void> {
-    const originalText = copyRoomCodeButton?.innerText ?? "Copy";
+    const copyButtons = getCopyButtons();
+    const originalText = copyButtons[0]?.innerText ?? "Copy";
 
     try {
         if (navigator.clipboard?.writeText) {
@@ -1328,14 +1473,14 @@ async function copyRoomCode(): Promise<void> {
             document.body.removeChild(temp);
         }
 
-        if (copyRoomCodeButton) {
-            copyRoomCodeButton.innerText = "Copied";
-            setTimeout(() => {
-                if (copyRoomCodeButton) {
-                    copyRoomCodeButton.innerText = originalText;
-                }
-            }, 1200);
-        }
+        copyButtons.forEach(button => {
+            button.innerText = "Copied";
+        });
+        setTimeout(() => {
+            copyButtons.forEach(button => {
+                button.innerText = originalText;
+            });
+        }, 1200);
     } catch (err) {
         console.error("Copy room code failed", err);
     }
@@ -1344,6 +1489,37 @@ async function copyRoomCode(): Promise<void> {
 copyRoomCodeButton?.addEventListener("click", () => {
     void copyRoomCode();
 });
+copyRoomCodeTopButton?.addEventListener("click", () => {
+    void copyRoomCode();
+});
+
+function setMenuOpen(open: boolean): void {
+    document.body.classList.toggle("menu-open", open);
+    if (roomMenu) {
+        roomMenu.setAttribute("aria-hidden", open ? "false" : "true");
+    }
+}
+
+menuToggleButton?.addEventListener("click", () => {
+    setMenuOpen(true);
+});
+menuCloseButton?.addEventListener("click", () => {
+    setMenuOpen(false);
+});
+roomMenu?.addEventListener("click", (event) => {
+    if (event.target === roomMenu) {
+        setMenuOpen(false);
+    }
+});
+
+function renderMenuButton(room: Room): void {
+    if (!menuToggleButton) return;
+    const isHost = room.host.toLowerCase() === playerName.toLowerCase();
+    menuToggleButton.style.display = isHost ? "inline-flex" : "none";
+    if (!isHost) {
+        setMenuOpen(false);
+    }
+}
 
 resetChipsButton?.addEventListener("click", async () => {
     try {
@@ -1527,9 +1703,6 @@ saveSeatingButton?.addEventListener("click", async () => {
     }
 });
 
-// refreshes in intervals of 2s - to be replaced by websockets
-//setInterval(() => { void refreshRoom(); }, 2000);
-
 declare const SockJS: any;
 declare const Stomp: any;
 
@@ -1574,22 +1747,8 @@ function updateMobileActionBarMode(): void {
         return;
     }
 
-    const releaseTarget = getMobileReleaseTarget();
-    let shouldFix = true;
-
-    if (releaseTarget) {
-        const targetTop = releaseTarget.getBoundingClientRect().top;
-        shouldFix = targetTop > window.innerHeight * 0.85;
-    }
-
-    tableControlsOverlay.classList.toggle("mobile-actions-fixed", shouldFix);
-
-    if (shouldFix) {
-        const height = tableControlsOverlay.getBoundingClientRect().height;
-        document.body.style.paddingBottom = `${Math.ceil(height + 12)}px`;
-    } else {
-        document.body.style.paddingBottom = "";
-    }
+    tableControlsOverlay.classList.remove("mobile-actions-fixed");
+    document.body.style.paddingBottom = "";
 }
 
 window.addEventListener("scroll", () => {

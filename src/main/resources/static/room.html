@@ -8,17 +8,11 @@
 </head>
 <body>
 <main class="room-page">
-    <header class="room-header">
-        <div>
-            <div class="room-title-row">
-                <h1 id="roomTitle" class="room-title">Poker Room</h1>
-                <button id="copyRoomCodeButton" class="copy-room-button" type="button">Copy</button>
-            </div>
-            <p id="roomInfo" class="room-subtitle"></p>
-        </div>
-    </header>
-
     <section class="table-card">
+        <button id="menuToggleButton" class="menu-button" type="button" aria-label="Open menu">
+            <span class="menu-icon"></span>
+        </button>
+        <button id="copyRoomCodeTopButton" class="copy-room-button top-copy-button" type="button">Copy</button>
         <div class="poker-table">
             <div class="table-surface">
                 <div class="table-center">
@@ -65,82 +59,87 @@
             <div class="seat seat-8"><div id="seat8" class="seat-label">Seat 9</div></div>
             <div class="seat seat-9"><div id="seat9" class="seat-label">Seat 10</div></div>
 
-            <div class="table-controls-overlay">
-                <div class="table-controls-left bet-form-controls">
-                    <button id="decrementBetButton" class="tune-btn" type="button">–</button>
+        </div>
 
-                    <div class="slider-wrapper">
-                        <input id="betRaiseSlider" type="range" min="0" max="1000" value="50" step="5">
+        <div class="table-controls-overlay">
+            <div class="table-controls-left bet-form-controls">
+                <button id="decrementBetButton" class="tune-btn" type="button">–</button>
+
+                <div class="slider-wrapper">
+                    <input id="betRaiseSlider" type="range" min="0" max="1000" value="50" step="5">
+                </div>
+
+                <button id="incrementBetButton" class="tune-btn" type="button">+</button>
+
+                <input id="betRaiseNumberInput" class="bet-amount-input" type="number" min="0" max="1000" step="5" value="50">
+                <button id="betRaiseActionButton">Bet</button>
+            </div>
+
+            <div class="table-controls-right">
+                <button id="startRoundButton">Start Round</button>
+                <button id="preCheckFoldButton" type="button">Pre Fold</button>
+                <!--
+                <button id="checkFoldButton">Check / Fold</button>
+                -->
+                <button id="checkButton">Check</button>
+                <button id="callButton">Call</button>
+                <button id="foldButton">Fold</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="roomMenu" class="room-menu" aria-hidden="true">
+        <div class="room-menu-panel">
+            <button id="menuCloseButton" class="menu-close" type="button">Close</button>
+
+            <header class="room-header">
+                <div>
+                    <div class="room-title-row">
+                        <h1 id="roomTitle" class="room-title">Poker Room</h1>
+                        <button id="copyRoomCodeButton" class="copy-room-button" type="button">Copy</button>
                     </div>
-
-                    <button id="incrementBetButton" class="tune-btn" type="button">+</button>
-
-                    <input id="betRaiseNumberInput" class="bet-amount-input" type="number" min="0" max="1000" step="5" value="50">
-                    <button id="betRaiseActionButton">Bet</button>
+                    <p id="roomInfo" class="room-subtitle"></p>
                 </div>
+            </header>
 
-                <div class="table-controls-right">
-                    <button id="startRoundButton">Start Round</button>
-                    <button id="preCheckFoldButton" type="button">Pre Fold</button>
-                    <!--
-                    <button id="checkFoldButton">Check / Fold</button>
-                    -->
-                    <button id="checkButton">Check</button>
-                    <button id="callButton">Call</button>
-                    <button id="foldButton">Fold</button>
-                </div>
+
+            <div id="hostChipsSection" style="display: none;">
+                <h3>Set Chips</h3>
+
+                <label for="hostPlayerSelect">Player</label>
+                <select id="hostPlayerSelect"></select>
+
+                <label for="hostChipsInput">Chips</label>
+                <input id="hostChipsInput" type="number" min="0" placeholder="Chips">
+
+                <button id="setPlayerChipsButton">Set Chips</button>
+                <button id="resetChipsButton">Reset Chips</button>
+            </div>
+
+            <div id="hostKickSection" style="display: none;">
+                <h3>Kick Player</h3>
+                <select id="kickPlayerSelect"></select>
+                <button id="kickPlayerButton" type="button">Kick</button>
+            </div>
+
+            <div id="hostSeatingSection" style="display: none;">
+                <h3>Seating</h3>
+                <p id="seatingEditHint" class="host-seating-hint">Seating edit mode: drag player cards on the table to swap seats.</p>
+                <div id="hostSeatingList" class="host-seating-list"></div>
+                <button id="saveSeatingButton" type="button">Save Seating</button>
             </div>
         </div>
-    </section>
+    </div>
 
-    <section>
-        <div id="showdownSection" style="display: none;">
-            <div id="showdownPotList" class="showdown-pot-list"></div>
-            <div id="showdownRanksList" class="showdown-winners"></div>
-            <button id="resolveShowdownButton">Award Pot</button>
+    <div id="showdownModal" class="showdown-modal" style="display: none;">
+        <div class="showdown-modal-card">
+            <h3>Resolve Pot</h3>
+            <section id="showdownSection">
+                <div id="showdownPotList" class="showdown-pot-list"></div>
+                <div id="showdownRanksList" class="showdown-winners"></div>
+                <button id="resolveShowdownButton">Award Pot</button>
+            </section>
         </div>
-    </section>
-
-    <section class="content-grid">
-        <article class="card">
-            <div class="card-header">
-                <h2 class="card-title">Players</h2>
-            </div>
-            <ul id="playerList" class="player-list"></ul>
-        </article>
-
-        <article class="card">
-            <div class="card-header">
-                <h2 class="card-title">Waiting Players</h2>
-            </div>
-            <ul id="waitingPlayersList" class="player-list muted-list"></ul>
-        </article>
-    </section>
-
-    <div id="hostChipsSection" style="display: none;">
-        <h3>Set Chips</h3>
-
-        <label for="hostPlayerSelect">Player</label>
-        <select id="hostPlayerSelect"></select>
-
-        <label for="hostChipsInput">Chips</label>
-        <input id="hostChipsInput" type="number" min="0" placeholder="Chips">
-
-        <button id="setPlayerChipsButton">Set Chips</button>
-        <button id="resetChipsButton">Reset Chips</button>
-    </div>
-
-    <div id="hostKickSection" style="display: none;">
-        <h3>Kick Player</h3>
-        <select id="kickPlayerSelect"></select>
-        <button id="kickPlayerButton" type="button">Kick</button>
-    </div>
-
-    <div id="hostSeatingSection" style="display: none;">
-        <h3>Seating</h3>
-        <p id="seatingEditHint" class="host-seating-hint">Seating edit mode: drag player cards on the table to swap seats.</p>
-        <div id="hostSeatingList" class="host-seating-list"></div>
-        <button id="saveSeatingButton" type="button">Save Seating</button>
     </div>
 
 </main>
