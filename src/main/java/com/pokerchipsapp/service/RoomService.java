@@ -804,6 +804,7 @@ public class RoomService {
 
         List<Player> players = room.getPlayers();
         int playerCount = players.size();
+        int maxSeats = 10;
 
         if (assignments.size() != playerCount) {
             throw new IllegalArgumentException("All active players must be assigned exactly once");
@@ -823,7 +824,7 @@ public class RoomService {
             }
 
             int seatIndex = assignment.getSeatIndex();
-            if (seatIndex < 0 || seatIndex >= playerCount) {
+            if (seatIndex < 0 || seatIndex >= maxSeats) {
                 throw new IllegalArgumentException("Invalid seat index: " + seatIndex);
             }
 
@@ -857,10 +858,6 @@ public class RoomService {
         }
 
         players.sort((a, b) -> Integer.compare(a.getSeatIndex(), b.getSeatIndex()));
-
-        for (int i = 0; i < players.size(); i++) {
-            players.get(i).setSeatIndex(i);
-        }
 
         if (dealerName != null) {
             int dealerIndex = -1;
